@@ -128,7 +128,7 @@ impl LanguageLogicUnit {
             Err(exception) => {
                 return Err(Exception::LanguageLogicException(BaseException::new(
                     format!("Failed to execute chat completion."),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -159,7 +159,7 @@ impl LanguageLogicUnit {
             Err(exception) => {
                 return Err(Exception::LanguageLogicException(BaseException::new(
                     "Failed to get embeddings response from client.".to_string(),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -187,7 +187,7 @@ impl LanguageLogicUnit {
             Err(exception) => {
                 return Err(Exception::LanguageLogicException(BaseException::new(
                     format!("Failed to get embedding for value a \"{}\".", value_a),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -196,7 +196,7 @@ impl LanguageLogicUnit {
             Err(exception) => {
                 return Err(Exception::LanguageLogicException(BaseException::new(
                     format!("Failed to get embedding for value b \"{}\".", value_b),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -225,7 +225,7 @@ impl LanguageLogicUnit {
             Err(exception) => {
                 return Err(Exception::LanguageLogicException(BaseException::new(
                     "Failed to execute string operation.".to_string(),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -246,7 +246,7 @@ impl LanguageLogicUnit {
             Err(exception) => {
                 return Err(Exception::LanguageLogicException(BaseException::new(
                     "Failed to execute boolean operation.".to_string(),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -266,7 +266,7 @@ impl LanguageLogicUnit {
                             "Failed to execute boolean operation for true value '{}'.",
                             true_value
                         ),
-                        Some(Box::new(BaseException::from(exception))),
+                        Some(Box::new(exception.into())),
                     )));
                 }
             }
@@ -287,7 +287,7 @@ impl LanguageLogicUnit {
                             "Failed to execute boolean operation for false value '{}'.",
                             false_value
                         ),
-                        Some(Box::new(BaseException::from(exception))),
+                        Some(Box::new(exception.into())),
                     )));
                 }
             }

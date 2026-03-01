@@ -35,6 +35,18 @@ impl From<&dyn Error> for BaseException {
     }
 }
 
+impl From<minreq::Error> for BaseException {
+    fn from(error: minreq::Error) -> Self {
+        BaseException::new(format!("{:#?}", error), None)
+    }
+}
+
+impl From<miniserde::Error> for BaseException {
+    fn from(error: miniserde::Error) -> Self {
+        BaseException::new(format!("{:#?}", error), None)
+    }
+}
+
 impl From<String> for BaseException {
     fn from(message: String) -> Self {
         BaseException::new(message, None)
@@ -59,10 +71,25 @@ impl From<Exception> for BaseException {
                 BaseException::new(exception.message, exception.inner_exception)
             }
             // Control unit exceptions.
+            Exception::ControlUnitException(exception) => {
+                BaseException::new(exception.message, exception.inner_exception)
+            }
             Exception::DecoderException(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
             Exception::ExecutorException(exception) => {
+                BaseException::new(exception.message, exception.inner_exception)
+            }
+            // Processor exceptions.
+            Exception::ProcessorException(exception) => {
+                BaseException::new(exception.message, exception.inner_exception)
+            }
+            // Memory exceptions.
+            Exception::MemoryException(exception) => {
+                BaseException::new(exception.message, exception.inner_exception)
+            }
+            // Register exceptions.
+            Exception::RegisterException(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
         }
@@ -78,8 +105,15 @@ pub enum Exception {
     // Language logic unit exceptions.
     LanguageLogicException(BaseException),
     // Control unit exceptions.
+    ControlUnitException(BaseException),
     DecoderException(BaseException),
     ExecutorException(BaseException),
+    // Processor exceptions.
+    ProcessorException(BaseException),
+    // Memory exceptions.
+    MemoryException(BaseException),
+    // Register exceptions.
+    RegisterException(BaseException),
 }
 
 impl fmt::Display for Exception {

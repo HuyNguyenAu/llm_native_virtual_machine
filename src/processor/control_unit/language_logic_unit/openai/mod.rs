@@ -31,7 +31,7 @@ impl OpenAIClient {
                 return Err(Exception::OpenAIChatCompletionException(
                     BaseException::new(
                         "Failed to send chat request.".to_string(),
-                        Some(Box::new(BaseException::from(format!("{:#?}", error)))),
+                        Some(Box::new(error.into())),
                     ),
                 ));
             }
@@ -55,7 +55,7 @@ impl OpenAIClient {
                 return Err(Exception::OpenAIChatCompletionException(
                     BaseException::new(
                         format!("Failed to read chat response text. Error: {}", error),
-                        Some(Box::new(BaseException::from(format!("{:#?}", error)))),
+                        Some(Box::new(error.into())),
                     ),
                 ));
             }
@@ -69,7 +69,7 @@ impl OpenAIClient {
                         "Failed to deserialise chat response JSON. Response Text: {}",
                         text
                     ),
-                    Some(Box::new(BaseException::from(format!("{:#?}", error)))),
+                    Some(Box::new(error.into())),
                 ),
             )),
         }
@@ -86,7 +86,7 @@ impl OpenAIClient {
             Err(error) => {
                 return Err(Exception::OpenAIEmbeddingsException(BaseException::new(
                     "Failed to send embedding request.".to_string(),
-                    Some(Box::new(BaseException::from(format!("{:#?}", error)))),
+                    Some(Box::new(error.into())),
                 )));
             }
         };
@@ -106,7 +106,7 @@ impl OpenAIClient {
             Err(error) => {
                 return Err(Exception::OpenAIEmbeddingsException(BaseException::new(
                     format!("Failed to read embedding response text. Error: {}", error),
-                    Some(Box::new(BaseException::from(format!("{:#?}", error)))),
+                    Some(Box::new(error.into())),
                 )));
             }
         };
@@ -118,7 +118,7 @@ impl OpenAIClient {
                     "Failed to deserialise embedding response JSON. Response Text: {}",
                     text
                 ),
-                Some(Box::new(BaseException::from(format!("{:#?}", error)))),
+                Some(Box::new(error.into())),
             ))),
         }
     }

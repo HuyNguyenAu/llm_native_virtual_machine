@@ -1,8 +1,9 @@
+use core::error;
 use std::fs::read_to_string;
 
 use crate::{
     assembler::roles,
-    exceptions::exception::{BaseException, Exception},
+    exceptions::exception::{self, BaseException, Exception},
     processor::{
         control_unit::{
             instruction::{
@@ -26,10 +27,10 @@ impl Executor {
     fn read_text(registers: &Registers, register_number: u32) -> Result<&String, Exception> {
         let value = match registers.get_register(register_number) {
             Ok(value) => value,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read text from register.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -56,10 +57,10 @@ impl Executor {
     fn read_number(registers: &Registers, register_number: u32) -> Result<u32, Exception> {
         let value = match registers.get_register(register_number) {
             Ok(value) => value,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read number from register.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -92,10 +93,10 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &value) {
             Ok(_) => (),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to set destination register for load string instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         }
@@ -119,11 +120,11 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &value) {
             Ok(_) => (),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to set destination register for load immediate instruction."
                         .to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         }
@@ -148,7 +149,7 @@ impl Executor {
             Err(error) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read file for load file instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(error.into())),
                 )));
             }
         };
@@ -158,10 +159,10 @@ impl Executor {
             &Value::Text(file_contents.clone()),
         ) {
             Ok(_) => (),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to set destination register for load file instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         }
@@ -183,20 +184,20 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = match registers.get_register(instruction.source_register) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read source register for move instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
 
         match registers.set_register(instruction.destination_register, &value) {
             Ok(_) => (),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to set destination register for move instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         }
@@ -218,21 +219,21 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value_a = match Self::read_number(registers, instruction.source_register_1) {
             Ok(value) => value,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read number from source register 1 for branch instruction."
                         .to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
         let value_b = match Self::read_number(registers, instruction.source_register_2) {
             Ok(value) => value,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read number from source register 2 for branch instruction."
                         .to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -248,11 +249,11 @@ impl Executor {
         if is_true {
             let pointer = match usize::try_from(instruction.instruction_pointer_jump_index) {
                 Ok(index) => index,
-                Err(_) => {
+                Err(error) => {
                     return Err(Exception::ExecutorException(BaseException::new(
                         "Failed to convert instruction pointer jump index to usize for branch instruction."
                             .to_string(),
-                        None,
+                        Some(Box::new(error.to_string().into())),
                     )));
                 }
             };
@@ -285,10 +286,10 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = match registers.get_register(instruction.source_register) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read source register for output instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -315,10 +316,10 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = match Self::read_text(registers, instruction.source_register) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read text from source register for morph instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -330,10 +331,10 @@ impl Executor {
 
         let result = match LanguageLogicUnit::string(&micro_prompt, context, text_model) {
             Ok(result) => result,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to perform morph operation.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -347,9 +348,9 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &Value::Text(result)) {
             Ok(_) => Ok(()),
-            Err(error) => Err(Exception::ExecutorException(BaseException::new(
+            Err(exception) => Err(Exception::ExecutorException(BaseException::new(
                 "Failed to set destination register for morph instruction.".to_string(),
-                Some(Box::new(BaseException::from(error))),
+                Some(Box::new(exception.into())),
             ))),
         }
     }
@@ -362,10 +363,10 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = match Self::read_text(registers, instruction.source_register) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read text from source register for project instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -374,10 +375,10 @@ impl Executor {
 
         let result = match LanguageLogicUnit::string(&micro_prompt, context, text_model) {
             Ok(result) => result,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to perform project operation.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -391,9 +392,9 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &Value::Text(result)) {
             Ok(_) => Ok(()),
-            Err(error) => Err(Exception::ExecutorException(BaseException::new(
+            Err(exception) => Err(Exception::ExecutorException(BaseException::new(
                 "Failed to set destination register for project instruction.".to_string(),
-                Some(Box::new(BaseException::from(error))),
+                Some(Box::new(exception.into())),
             ))),
         }
     }
@@ -406,10 +407,10 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = match Self::read_text(registers, instruction.source_register) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read text from source register for distill instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -421,10 +422,10 @@ impl Executor {
 
         let result = match LanguageLogicUnit::string(&micro_prompt, context, text_model) {
             Ok(result) => result,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to perform distill operation.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -438,9 +439,9 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &Value::Text(result)) {
             Ok(_) => Ok(()),
-            Err(error) => Err(Exception::ExecutorException(BaseException::new(
+            Err(exception) => Err(Exception::ExecutorException(BaseException::new(
                 "Failed to set destination register for distill instruction.".to_string(),
-                Some(Box::new(BaseException::from(error))),
+                Some(Box::new(exception.into())),
             ))),
         }
     }
@@ -453,11 +454,11 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = match Self::read_text(registers, instruction.source_register) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read text from source register for correlate instruction."
                         .to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -469,10 +470,10 @@ impl Executor {
 
         let result = match LanguageLogicUnit::string(&micro_prompt, context, text_model) {
             Ok(result) => result,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to perform correlate operation.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -486,9 +487,9 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &Value::Text(result)) {
             Ok(_) => Ok(()),
-            Err(error) => Err(Exception::ExecutorException(BaseException::new(
+            Err(exception) => Err(Exception::ExecutorException(BaseException::new(
                 "Failed to set destination register for correlate instruction.".to_string(),
-                Some(Box::new(BaseException::from(error))),
+                Some(Box::new(exception.into())),
             ))),
         }
     }
@@ -502,10 +503,10 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = match Self::read_text(registers, instruction.source_register) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read text from source register for audit instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -526,10 +527,10 @@ impl Executor {
             embedding_model,
         ) {
             Ok(result) => result,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to perform audit operation.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -543,9 +544,9 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &Value::Number(result)) {
             Ok(_) => Ok(()),
-            Err(error) => Err(Exception::ExecutorException(BaseException::new(
+            Err(exception) => Err(Exception::ExecutorException(BaseException::new(
                 "Failed to set destination register for audit instruction.".to_string(),
-                Some(Box::new(BaseException::from(error))),
+                Some(Box::new(exception.into())),
             ))),
         }
     }
@@ -558,21 +559,21 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value_a = match Self::read_text(registers, instruction.source_register_1) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read text from source register 1 for similarity instruction."
                         .to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
         let value_b = match Self::read_text(registers, instruction.source_register_2) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read text from source register 2 for similarity instruction."
                         .to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -580,10 +581,10 @@ impl Executor {
         let result = match LanguageLogicUnit::cosine_similarity(&value_a, &value_b, embedding_model)
         {
             Ok(result) => result,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to perform similarity operation.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -599,9 +600,9 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &Value::Number(result)) {
             Ok(_) => Ok(()),
-            Err(error) => Err(Exception::ExecutorException(BaseException::new(
+            Err(exception) => Err(Exception::ExecutorException(BaseException::new(
                 "Failed to set destination register for similarity instruction.".to_string(),
-                Some(Box::new(BaseException::from(error))),
+                Some(Box::new(exception.into())),
             ))),
         }
     }
@@ -621,11 +622,11 @@ impl Executor {
 
         match registers.set_register(instruction.destination_register, &Value::Text(snapshot)) {
             Ok(_) => (),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to set destination register for context snapshot instruction."
                         .to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         }
@@ -646,20 +647,20 @@ impl Executor {
     ) -> Result<(), Exception> {
         let snapshot = match Self::read_text(registers, instruction.source_register) {
             Ok(value) => value.clone(),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read source register for context restore instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
 
         match registers.restore_context(&snapshot) {
             Ok(_) => (),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to restore context from snapshot.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         }
@@ -690,13 +691,13 @@ impl Executor {
                     None,
                 )));
             }
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     format!(
                         "Failed to read register r{} for context push instruction.",
                         instruction.source_register
                     ),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -736,12 +737,18 @@ impl Executor {
             }
         };
 
-        registers
-            .set_register(
-                instruction.destination_register,
-                &Value::Text(context.content.clone()),
-            )
-            .expect("Failed to set register for CONTEXT_POP instruction");
+        match registers.set_register(
+            instruction.destination_register,
+            &Value::Text(context.content.clone()),
+        ) {
+            Ok(_) => (),
+            Err(exception) => {
+                return Err(Exception::ExecutorException(BaseException::new(
+                    "Failed to set register for CONTEXT_POP instruction.".to_string(),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        }
 
         crate::debug_print!(debug, "Executed POP: Popped value from context stack.",);
 
@@ -785,10 +792,10 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = match Self::read_number(registers, instruction.source_register) {
             Ok(value) => value,
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to read number from register for decrement instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -807,10 +814,10 @@ impl Executor {
 
         match registers.set_register(instruction.source_register, &new_value) {
             Ok(_) => (),
-            Err(error) => {
+            Err(exception) => {
                 return Err(Exception::ExecutorException(BaseException::new(
                     "Failed to set register for decrement instruction.".to_string(),
-                    Some(Box::new(BaseException::from(error))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         }

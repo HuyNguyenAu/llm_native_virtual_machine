@@ -29,7 +29,7 @@ impl Decoder {
                     "Failed to decode opcode from byte code. Word: 0x{:08X}",
                     value
                 ),
-                Some(Box::new(BaseException::from(error.to_string()))),
+                Some(Box::new(error.to_string().into())),
             ))),
         }
     }
@@ -43,16 +43,28 @@ impl Decoder {
         let mut bytes = Vec::new();
         let mut address = pointer + registers.get_data_section_pointer();
 
-        while let Ok(word) = memory.read(address) {
+        loop {
+            let word = match memory.read(address) {
+                Ok(word) => word,
+                Err(exception) => {
+                    return Err(Exception::DecoderException(BaseException::new(
+                        format!(
+                            "{}. Failed to decode string byte at address {}.",
+                            message, address
+                        ),
+                        Some(Box::new(exception.into())),
+                    )));
+                }
+            };
             let value: u8 = match u32::from_be_bytes(*word).try_into() {
                 Ok(byte) => byte,
                 Err(error) => {
                     return Err(Exception::DecoderException(BaseException::new(
                         format!(
-                            "Failed decode string byte at address {}: value did not fit in a single byte.",
-                            address
+                            "{}. Failed decode string byte at address {}: value did not fit in a single byte.",
+                            message, address
                         ),
-                        Some(Box::new(BaseException::from(error.to_string()))),
+                        Some(Box::new(error.to_string().into())),
                     )));
                 }
             };
@@ -62,8 +74,11 @@ impl Decoder {
                 return match String::from_utf8(bytes) {
                     Ok(string) => Ok(string),
                     Err(error) => Err(Exception::DecoderException(BaseException::new(
-                        format!("Failed to decode string bytes at address {}.", address),
-                        Some(Box::new(BaseException::from(error.to_string()))),
+                        format!(
+                            "{}. Failed to decode string bytes at address {}.",
+                            message, address
+                        ),
+                        Some(Box::new(error.to_string().into())),
                     ))),
                 };
             }
@@ -71,15 +86,6 @@ impl Decoder {
             bytes.push(value);
             address += 1;
         }
-
-        Err(Exception::DecoderException(BaseException::new(
-            format!(
-                "Failed to decode string starting at address {}: reached end of memory without null terminator. {}",
-                pointer + registers.get_data_section_pointer(),
-                message
-            ),
-            None,
-        )))
     }
 
     fn expect_not_nop(op_code: OpCode) -> Result<(), Exception> {
@@ -107,7 +113,7 @@ impl Decoder {
                         "Failed to decode immediate instruction with opcode '{:?}'.",
                         op_code
                     ),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -130,7 +136,7 @@ impl Decoder {
                                 "Failed to decode immediate string for opcode '{:?}'",
                                 op_code
                             ),
-                            Some(Box::new(BaseException::from(exception))),
+                            Some(Box::new(exception.into())),
                         )));
                     }
                 };
@@ -254,7 +260,7 @@ impl Decoder {
                         "Failed to decode no register string instruction for opcode '{:?}'",
                         op_code
                     ),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };
@@ -387,7 +393,7 @@ impl Decoder {
             Err(exception) => {
                 return Err(Exception::DecoderException(BaseException::new(
                     "Failed to decode instruction opcode.".to_string(),
-                    Some(Box::new(BaseException::from(exception))),
+                    Some(Box::new(exception.into())),
                 )));
             }
         };

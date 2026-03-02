@@ -8,7 +8,7 @@ LF  X1, "examples/data/user_post.txt"
 PSH X1                  ; Push the user post content onto the context stack for processing.
 
 ; Guardrails: Audit the content against the AI standard to determine if it is likely AI-generated.
-LS  X2, "List any of these exact words if they are in the text: 'delve', 'tapestry', 'realm', 'testament', 'in summary', 'landscape'."
+LS  X2, "Is the following content likely to be AI-generated?"
 AUD X3, X2
 
 LI  X2, 100             ; Audit will return 100, the the content is 100% likely to be AI-generated.

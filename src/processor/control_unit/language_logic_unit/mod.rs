@@ -117,6 +117,79 @@ impl LanguageLogicUnit {
         Ok(merged_messages)
     }
 
+    // Message must always start with system role, and then followed by a user role. Assistant role can only be after a user role, and never at the end.
+    // This is because the assistant role is meant to provide additional context to the model, and should not be the final message that
+    // the model sees before generating a response. By enforcing this structure, we can ensure that the model receives a clear and consistent
+    // input format, which can help improve the quality of the generated responses.
+    fn ensure_messages_alternate_roles(
+        messages: &Vec<OpenAIChatCompletionRequestText>,
+    ) -> Result<(), Exception> {
+        if messages.is_empty() {
+            return Err(Exception::LanguageLogicException(BaseException::new(
+                "Failed to ensure messages alternate roles because messages are empty.".to_string(),
+                None,
+            )));
+        }
+
+        // First message must be system role.
+        if messages[0].role != roles::SYSTEM_ROLE {
+            return Err(Exception::LanguageLogicException(BaseException::new(
+                "The first message must have the system role.".to_string(),
+                None,
+            )));
+        }
+
+        // Last message must be user role.
+        if messages[1].role != roles::USER_ROLE {
+            return Err(Exception::LanguageLogicException(BaseException::new(
+                "The message following the system message must have the user role.".to_string(),
+                None,
+            )));
+        }
+
+        let mut current_role: String = roles::USER_ROLE.into();
+
+        for (i, message) in messages.iter().skip(2).enumerate() {
+            // If current role is assistant, message role must be user.
+            if current_role == roles::ASSISTANT_ROLE && message.role != roles::USER_ROLE {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    "The message following an assistant message must have the user role."
+                        .to_string(),
+                    None,
+                )));
+            }
+
+            // If current role is user, if not at the end, the message role can be an assistant.
+            // Otherwise, it must be the final message.
+            if current_role == roles::USER_ROLE {
+                let is_at_end = i >= messages.len() - 3;
+
+                if is_at_end {
+                    if message.role != roles::USER_ROLE {
+                        return Err(Exception::LanguageLogicException(BaseException::new(
+                            "The last message must have the user role.".to_string(),
+                            None,
+                        )));
+                    }
+                } else {
+                    let next_role = messages[i + 3].role.clone();
+
+                    if next_role != roles::ASSISTANT_ROLE {
+                        return Err(Exception::LanguageLogicException(BaseException::new(
+                            "The message following a user message must have the assistant role."
+                                .to_string(),
+                            None,
+                        )));
+                    }
+                }
+            }
+
+            current_role = message.role.clone();
+        }
+
+        Ok(())
+    }
+
     fn chat(
         content: &str,
         context: &Vec<ContextMessage>,
@@ -142,6 +215,16 @@ impl LanguageLogicUnit {
         .collect::<Vec<OpenAIChatCompletionRequestText>>();
         let messages = match Self::merge_messages_by_role(&messages) {
             Ok(merged_messages) => merged_messages,
+            Err(exception) => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    "Failed to execute chat completion.".to_string(),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        };
+
+        match Self::ensure_messages_alternate_roles(&messages) {
+            Ok(_) => {}
             Err(exception) => {
                 return Err(Exception::LanguageLogicException(BaseException::new(
                     "Failed to execute chat completion.".to_string(),

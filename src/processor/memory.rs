@@ -1,4 +1,4 @@
-use crate::exceptions::exception::{BaseException, Exception};
+use crate::exception::{BaseException, Exception};
 
 pub struct Memory {
     data: Vec<[u8; 4]>,

@@ -1,6 +1,6 @@
 use crate::{
     assembler::opcode::OpCode,
-    exceptions::exception::{BaseException, Exception},
+    exception::{BaseException, Exception},
     processor::{
         control_unit::instruction::{
             AuditInstruction, BranchInstruction, BranchType, ContextClearInstruction,

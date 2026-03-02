@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    exceptions::exception::{BaseException, Exception},
+    exception::{BaseException, Exception},
     processor::control_unit::ControlUnit,
 };
 

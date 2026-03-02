@@ -2,7 +2,7 @@ use std::fmt;
 
 use miniserde::{Deserialize, Serialize};
 
-use crate::exceptions::exception::{BaseException, Exception};
+use crate::exception::{BaseException, Exception};
 
 #[derive(Debug, Clone)]
 pub enum Value {

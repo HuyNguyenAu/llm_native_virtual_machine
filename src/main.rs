@@ -1,7 +1,7 @@
 mod assembler;
 mod config;
 mod constants;
-mod exceptions;
+mod exception;
 mod processor;
 
 use std::{
@@ -12,7 +12,7 @@ use std::{
 
 use crate::{
     config::Config,
-    exceptions::exception::{BaseException, Exception},
+    exception::{BaseException, Exception},
 };
 
 fn start_up() -> Result<(), Exception> {
@@ -114,7 +114,8 @@ fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
         Some(stem) => stem,
         None => {
             return Err(Exception::ProgramException(BaseException::new(
-                "Failed to build. Failed to determine output filename from source file.".to_string(),
+                "Failed to build. Failed to determine output filename from source file."
+                    .to_string(),
                 None,
             )));
         }

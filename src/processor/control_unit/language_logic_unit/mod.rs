@@ -1,6 +1,6 @@
 use crate::{
     assembler::roles,
-    exceptions::exception::{BaseException, Exception},
+    exception::{BaseException, Exception},
     processor::{
         control_unit::language_logic_unit::openai::{
             OpenAIClient,

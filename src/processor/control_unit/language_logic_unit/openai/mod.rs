@@ -2,7 +2,7 @@ use miniserde::json::{self, from_str};
 use minreq::post;
 
 use crate::{
-    exceptions::exception::{BaseException, Exception},
+    exception::{BaseException, Exception},
     processor::control_unit::language_logic_unit::openai::{
         chat_completion_models::{OpenAIChatCompletionRequest, OpenAIChatCompletionResponse},
         embeddings_models::{OpenAIEmbeddingsRequest, OpenAIEmbeddingsResponse},

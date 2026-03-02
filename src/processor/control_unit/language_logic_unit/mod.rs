@@ -197,13 +197,6 @@ impl LanguageLogicUnit {
         }))
         .collect::<Vec<OpenAIChatCompletionRequestText>>();
 
-        println!("--- Messages ---");
-
-        messages.iter().for_each(|message| {
-            println!("{}: {}\n", message.role, message.content);
-        });
-        println!("--- End of Messages ---");
-
         let messages = match Self::merge_messages_by_role(&messages) {
             Ok(merged_messages) => merged_messages,
             Err(exception) => {
@@ -213,13 +206,6 @@ impl LanguageLogicUnit {
                 )));
             }
         };
-
-        println!("--- Merged Messages ---");
-
-        messages.iter().for_each(|message| {
-            println!("{}: {}\n", message.role, message.content);
-        });
-        println!("--- End of Merged Messages ---");
 
         match Self::validate_messages(&messages) {
             Ok(_) => {}

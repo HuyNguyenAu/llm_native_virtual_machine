@@ -1,5 +1,6 @@
 use crate::{
     assembler::roles,
+    exception::{BaseException, Exception},
     processor::{
         control_unit::language_logic_unit::openai::{
             OpenAIClient,
@@ -71,7 +72,11 @@ impl LanguageLogicUnit {
         value.trim().replace("\n", "").to_string()
     }
 
-    fn chat(content: &str, context: Vec<ContextMessage>, text_model: &str) -> Result<String, String> {
+    fn chat(
+        content: &str,
+        context: &Vec<ContextMessage>,
+        text_model: &str,
+    ) -> Result<String, Exception> {
         let model = Self::default_text_model(text_model);
         let messages = std::iter::once(OpenAIChatCompletionRequestText {
             role: roles::SYSTEM_ROLE.to_string(),
@@ -79,10 +84,10 @@ impl LanguageLogicUnit {
         })
         .chain(
             context
-                .into_iter()
+                .iter()
                 .map(|message| OpenAIChatCompletionRequestText {
-                    role: message.role,
-                    content: message.content,
+                    role: message.role.clone(),
+                    content: message.content.clone(),
                 }),
         )
         .chain(std::iter::once(OpenAIChatCompletionRequestText {
@@ -118,57 +123,83 @@ impl LanguageLogicUnit {
             samplers: model.samplers.to_vec(),
             timings_per_token: model.timings_per_token,
         };
+        let response = match OpenAIClient::chat_completion(request) {
+            Ok(response) => response,
+            Err(exception) => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    format!("Failed to execute chat completion."),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        };
 
-        let response = OpenAIClient::chat_completion(request).map_err(|error| {
-            format!("Failed to get chat response from client. Error: {}", error)
-        })?;
-
-        let choice = response
-            .choices
-            .first()
-            .ok_or_else(|| "No choices returned from client.".to_string())?;
+        let choice = match response.choices.first() {
+            Some(choice) => choice,
+            None => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    "No choices returned from client.".to_string(),
+                    None,
+                )));
+            }
+        };
         let result = Self::clean_string(&choice.message.content);
 
         Ok(result)
     }
 
-    fn embeddings(content: &str, embedding_model: &str) -> Result<Vec<f32>, String> {
+    fn embeddings(content: &str, embedding_model: &str) -> Result<Vec<f32>, Exception> {
         let model = Self::default_embeddings_model(embedding_model);
         let request = OpenAIEmbeddingsRequest {
             model: model.model.to_string(),
             input: content.to_string(),
             encoding_format: model.encoding_format.to_string(),
         };
+        let response = match OpenAIClient::embeddings(request) {
+            Ok(response) => response,
+            Err(exception) => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    "Failed to get embeddings response from client.".to_string(),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        };
 
-        let response = OpenAIClient::embeddings(request).map_err(|error| {
-            format!(
-                "Failed to get embeddings response from client. Error: {}",
-                error
-            )
-        })?;
-
-        let embeddings = response
-            .data
-            .first()
-            .ok_or_else(|| "No embeddings returned from client.".to_string())?;
+        let embeddings = match response.data.first() {
+            Some(embedding) => embedding,
+            None => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    "No embeddings returned from client.".to_string(),
+                    None,
+                )));
+            }
+        };
 
         Ok(embeddings.embedding.to_owned())
     }
 
-    pub fn cosine_similarity(value_a: &str, value_b: &str, embedding_model: &str) -> Result<u32, String> {
-        let value_a_embeddings = Self::embeddings(value_a, embedding_model).map_err(|error| {
-            format!(
-                "Failed to get embedding for \"{}\". Error: {}",
-                value_a, error
-            )
-        })?;
-
-        let value_b_embeddings = Self::embeddings(value_b, embedding_model).map_err(|error| {
-            format!(
-                "Failed to get embedding for \"{}\". Error: {}",
-                value_b, error
-            )
-        })?;
+    pub fn cosine_similarity(
+        value_a: &str,
+        value_b: &str,
+        embedding_model: &str,
+    ) -> Result<u32, Exception> {
+        let value_a_embeddings = match Self::embeddings(value_a, embedding_model) {
+            Ok(embeddings) => embeddings,
+            Err(exception) => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    format!("Failed to get embedding for value a \"{}\".", value_a),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        };
+        let value_b_embeddings = match Self::embeddings(value_b, embedding_model) {
+            Ok(embeddings) => embeddings,
+            Err(exception) => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    format!("Failed to get embedding for value b \"{}\".", value_b),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        };
 
         // Compute cosine similarity.
         let dot_product: f32 = value_a_embeddings
@@ -184,9 +215,20 @@ impl LanguageLogicUnit {
         Ok(percentage_similarity.round() as u32)
     }
 
-    pub fn string(micro_prompt: &str, context: Vec<ContextMessage>, text_model: &str) -> Result<String, String> {
-        let result = Self::chat(micro_prompt, context, text_model)
-            .map_err(|error| format!("Failed to execute string operation. Error: {}", error))?;
+    pub fn string(
+        micro_prompt: &str,
+        context: &Vec<ContextMessage>,
+        text_model: &str,
+    ) -> Result<String, Exception> {
+        let result = match Self::chat(micro_prompt, context, text_model) {
+            Ok(result) => result,
+            Err(exception) => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    "Failed to execute string operation.".to_string(),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        };
 
         Ok(result)
     }
@@ -195,23 +237,37 @@ impl LanguageLogicUnit {
         micro_prompt: &str,
         true_values: Vec<&str>,
         false_values: Vec<&str>,
-        context: Vec<ContextMessage>,
+        context: &Vec<ContextMessage>,
         text_model: &str,
         embedding_model: &str,
-    ) -> Result<u32, String> {
-        let value = Self::string(micro_prompt, context, text_model)
-            .map_err(|error| format!("Failed to execute boolean operation. Error: {}", error))?;
+    ) -> Result<u32, Exception> {
+        let value = match Self::string(micro_prompt, context, text_model) {
+            Ok(value) => value,
+            Err(exception) => {
+                return Err(Exception::LanguageLogicException(BaseException::new(
+                    "Failed to execute boolean operation.".to_string(),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        };
 
         let mut true_scores = Vec::<u32>::new();
 
         for true_value in &true_values {
-            match Self::cosine_similarity(&value.to_lowercase(), &true_value.to_lowercase(), embedding_model) {
+            match Self::cosine_similarity(
+                &value.to_lowercase(),
+                &true_value.to_lowercase(),
+                embedding_model,
+            ) {
                 Ok(score) => true_scores.push(score),
-                Err(error) => {
-                    return Err(format!(
-                        "Failed to execute boolean operation for true value '{}'. Error: {}",
-                        true_value, error
-                    ));
+                Err(exception) => {
+                    return Err(Exception::LanguageLogicException(BaseException::new(
+                        format!(
+                            "Failed to execute boolean operation for true value '{}'.",
+                            true_value
+                        ),
+                        Some(Box::new(exception.into())),
+                    )));
                 }
             }
         }
@@ -219,13 +275,20 @@ impl LanguageLogicUnit {
         let mut false_scores = Vec::<u32>::new();
 
         for false_value in &false_values {
-            match Self::cosine_similarity(&value.to_lowercase(), &false_value.to_lowercase(), embedding_model) {
+            match Self::cosine_similarity(
+                &value.to_lowercase(),
+                &false_value.to_lowercase(),
+                embedding_model,
+            ) {
                 Ok(score) => false_scores.push(score),
-                Err(error) => {
-                    return Err(format!(
-                        "Failed to execute boolean operation for false value '{}'. Error: {}",
-                        false_value, error
-                    ));
+                Err(exception) => {
+                    return Err(Exception::LanguageLogicException(BaseException::new(
+                        format!(
+                            "Failed to execute boolean operation for false value '{}'.",
+                            false_value
+                        ),
+                        Some(Box::new(exception.into())),
+                    )));
                 }
             }
         }

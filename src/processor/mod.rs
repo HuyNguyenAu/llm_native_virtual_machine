@@ -1,4 +1,8 @@
-use crate::{config::Config, processor::control_unit::ControlUnit};
+use crate::{
+    config::Config,
+    exception::{BaseException, Exception},
+    processor::control_unit::ControlUnit,
+};
 
 mod control_unit;
 mod memory;
@@ -17,36 +21,85 @@ impl Processor {
         }
     }
 
-    pub fn load(&mut self, data: Vec<u8>) -> Result<(), String> {
+    pub fn load(&mut self, data: Vec<u8>) -> Result<(), Exception> {
         if !data.len().is_multiple_of(4) {
-            return Err(format!(
-                "Invalid bytecode length: {}. Bytecode must be a multiple of 4 bytes.",
-                data.len()
-            ));
+            return Err(Exception::ProcessorException(BaseException::new(
+                format!(
+                    "Processor failed to load byte code. Invalid byte code length: {}. Byte code must be a multiple of 4 bytes.",
+                    data.len()
+                ),
+                None,
+            )));
         }
 
-        let byte_code: Vec<[u8; 4]> = data
-            .chunks(4)
-            .map(|chunk| {
-                chunk
-                    .try_into()
-                    .expect("Byte code chunks must be exactly 4 bytes")
-            })
-            .collect();
+        let chunks = data.chunks(4);
+        let mut byte_code: Vec<[u8; 4]> = Vec::new();
 
-        self.control_unit.load(byte_code);
-        Ok(())
+        for chunk in chunks {
+            match chunk.try_into() {
+                Ok(bytes) => byte_code.push(bytes),
+                Err(error) => {
+                    return Err(Exception::ProcessorException(BaseException::new(
+                        format!(
+                            "Processor failed to load byte code. Byte code chunks must be exactly 4 bytes."
+                        ),
+                        Some(Box::new(format!("{:#?}", error).into())),
+                    )));
+                }
+            }
+        }
+
+        match self.control_unit.load(byte_code) {
+            Ok(_) => Ok(()),
+            Err(exception) => {
+                return Err(Exception::ProcessorException(BaseException::new(
+                    "Processor failed to load byte code into control unit.".to_string(),
+                    Some(Box::new(exception.into())),
+                )));
+            }
+        }
     }
 
-    pub fn run(&mut self) {
-        while self.control_unit.fetch() {
-            let instruction = self.control_unit.decode();
-            self.control_unit.execute(
+    pub fn run(&mut self) -> Result<(), Exception> {
+        loop {
+            match self.control_unit.fetch() {
+                Ok(instruction_fetched) => {
+                    if !instruction_fetched {
+                        return Ok(());
+                    }
+                }
+                Err(exception) => {
+                    return Err(Exception::ProcessorException(BaseException::new(
+                        "Processor failed to fetch instruction.".to_string(),
+                        Some(Box::new(exception.into())),
+                    )));
+                }
+            }
+
+            let instruction = match self.control_unit.decode() {
+                Ok(instruction) => instruction,
+                Err(exception) => {
+                    return Err(Exception::ProcessorException(BaseException::new(
+                        "Processor failed to decode instruction.".to_string(),
+                        Some(Box::new(exception.into())),
+                    )));
+                }
+            };
+
+            match self.control_unit.execute(
                 instruction,
                 &self.config.text_model,
                 &self.config.embedding_model,
                 self.config.debug_run,
-            );
+            ) {
+                Ok(_) => (),
+                Err(exception) => {
+                    return Err(Exception::ProcessorException(BaseException::new(
+                        "Processor failed to execute instruction.".to_string(),
+                        Some(Box::new(exception.into())),
+                    )));
+                }
+            }
         }
     }
 }

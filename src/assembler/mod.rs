@@ -282,7 +282,7 @@ impl Assembler {
                     Ok(value) => value,
                     Err(_) => {
                         self.error_at_current(&format!(
-                            "Failed to convert bytecode index to u32 for backpatching. Bytecode index exceeds {}. Found bytecode index: {}.",
+                            "Failed to convert byte code index to u32 for backpatching. Byte code index exceeds {}. Found byte code index: {}.",
                             u32::MAX,
                             byte_code_index
                         ));

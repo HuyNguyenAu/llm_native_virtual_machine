@@ -8,7 +8,7 @@ pub struct BaseException {
 
 impl fmt::Display for BaseException {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}", self.message)
+        write!(formatter, "{:#?}", self.message)
     }
 }
 

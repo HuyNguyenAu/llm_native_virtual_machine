@@ -76,12 +76,15 @@ fn config() -> Result<Config, Exception> {
 }
 
 fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
-    let source = read_to_string(file_path).map_err(|error| {
-        Exception::ProgramException(BaseException::new(
-            format!("Failed to build. Failed to read source file: {}", file_path),
-            Some(Box::new(error.into())),
-        ))
-    })?;
+    let source = match read_to_string(file_path) {
+        Ok(source) => source,
+        Err(error) => {
+            return Err(Exception::ProgramException(BaseException::new(
+                format!("Failed to build. Failed to read source file: {}", file_path),
+                Some(Box::new(error.into())),
+            )));
+        }
+    };
     let source: &'static str = Box::leak(Box::new(source));
 
     let mut compiler = assembler::Assembler::new(source);
@@ -188,43 +191,60 @@ fn run(file_path: &str, config: &Config) -> Result<(), Exception> {
     Ok(())
 }
 
-fn main() -> Result<(), Exception> {
+fn main() {
     match start_up() {
         Ok(_) => (),
         Err(exception) => {
-            println!("Startup error: {}", exception);
-            return Ok(());
+            println!("Startup error: {:#?}", exception);
+            return;
         }
     }
 
-    let config = config()?;
+    let config = match config() {
+        Ok(config) => config,
+        Err(exception) => {
+            println!("Configuration error: {:#?}", exception);
+            return;
+        }
+    };
 
     let args: Vec<String> = env::args().collect();
     let command = match args.get(1) {
         Some(command) => command,
         None => {
             println!("No command provided. {}", constants::HELP_USAGE);
-            return Ok(());
+            return;
         }
     };
     let file_path = match args.get(2) {
         Some(file_path) => file_path,
         None => {
             println!("No file path provided. {}", constants::HELP_USAGE);
-            return Ok(());
+            return;
         }
     };
 
     match command.as_str() {
-        "build" => build(file_path, &config),
-        "run" => run(file_path, &config),
+        "build" => match build(file_path, &config) {
+            Ok(_) => (),
+            Err(exception) => {
+                println!("Build error: {:#?}", exception);
+                return;
+            }
+        },
+        "run" => match run(file_path, &config) {
+            Ok(_) => (),
+            Err(exception) => {
+                println!("Run error: {:#?}", exception);
+                return;
+            }
+        },
         unexpected_command => {
             println!(
                 "Unknown command: {}. {}",
                 unexpected_command,
                 constants::HELP_USAGE
             );
-            Ok(())
         }
     }
 }

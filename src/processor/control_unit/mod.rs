@@ -77,7 +77,8 @@ impl ControlUnit {
             Ok(pointer) => pointer,
             Err(exception) => {
                 return Err(Exception::ControlUnitException(BaseException::new(
-                    "Control Unit failed to load byte code: invalid instruction section pointer".to_string(),
+                    "Control Unit failed to load byte code: invalid instruction section pointer"
+                        .to_string(),
                     Some(Box::new(exception.into())),
                 )));
             }
@@ -86,7 +87,8 @@ impl ControlUnit {
             Ok(pointer) => pointer,
             Err(exception) => {
                 return Err(Exception::ControlUnitException(BaseException::new(
-                    "Control Unit failed to load byte code: invalid data section pointer".to_string(),
+                    "Control Unit failed to load byte code: invalid data section pointer"
+                        .to_string(),
                     Some(Box::new(exception.into())),
                 )));
             }
@@ -112,7 +114,8 @@ impl ControlUnit {
             Ok(bytes) => bytes,
             Err(exception) => {
                 return Err(Exception::ControlUnitException(BaseException::new(
-                    "Control Unit failed to fetch instruction: unable to read instruction bytes".to_string(),
+                    "Control Unit failed to fetch instruction: unable to read instruction bytes"
+                        .to_string(),
                     Some(Box::new(exception.into())),
                 )));
             }
@@ -129,7 +132,8 @@ impl ControlUnit {
             Some(bytes) => bytes,
             None => {
                 return Err(Exception::ControlUnitException(BaseException::new(
-                    "Control Unit failed to decode instruction: no instruction bytes found".to_string(),
+                    "Control Unit failed to decode instruction: no instruction bytes found"
+                        .to_string(),
                     None,
                 )));
             }

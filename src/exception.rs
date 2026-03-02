@@ -10,6 +10,14 @@ pub struct BaseException {
     pub inner_exception: Option<Box<Exception>>,
 }
 
+impl std::ops::Deref for BaseException {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.location
+    }
+}
+
 impl BaseException {
     #[track_caller]
     pub fn new(message: String, inner_exception: Option<Box<Exception>>) -> Self {

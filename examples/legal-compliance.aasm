@@ -6,13 +6,13 @@
 LF  X1, "examples/data/msa_draft_v2.txt"
 LF  X2, "examples/data/gdpr_article_6.txt"
 
-LS  X3, "Contract draft:"
-PSH X3
-PSH X1              ; Push the contract draft onto the context stack for processing.
-
 LS  X3, "GDPR Article 6:"
 PSH X3
 PSH X2              ; Push the GDPR article onto the context stack for reference.
+
+LS  X3, "Contract draft:"
+PSH X3
+PSH X1              ; Push the contract draft onto the context stack for processing.
 
 ; Does the contract draft comply with GDPR Article 6 standards?
 LS  X3, "Does the contract draft comply with GDPR Article 6 standards above?"

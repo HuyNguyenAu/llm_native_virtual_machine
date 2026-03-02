@@ -85,7 +85,7 @@ impl LanguageLogicUnit {
                 current_role = Some(message.role.clone());
             }
 
-            let role = match current_role.clone() {
+            let role = match &current_role {
                 Some(role) => role,
                 None => {
                     return Err(Exception::LanguageLogicException(BaseException::new(
@@ -96,7 +96,7 @@ impl LanguageLogicUnit {
                 }
             };
 
-            if &message.role == &role {
+            if &message.role == role {
                 if !current_content.is_empty() {
                     current_content.push_str("\n");
                 }
@@ -104,14 +104,14 @@ impl LanguageLogicUnit {
                 current_content.push_str(&message.content);
             }
 
-            if &message.role != &role || i >= messages.len() - 1 {
+            if &message.role != role || i >= messages.len() - 1 {
                 merged_messages.push(OpenAIChatCompletionRequestText {
-                    role,
+                    role: role.clone(),
                     content: current_content.clone(),
                 });
 
-                current_content.clear();
                 current_role = Some(message.role.clone());
+                current_content = message.content.clone();
             }
         }
 
@@ -122,9 +122,7 @@ impl LanguageLogicUnit {
     // This is because the assistant role is meant to provide additional context to the model, and should not be the final message that
     // the model sees before generating a response. By enforcing this structure, we can ensure that the model receives a clear and consistent
     // input format, which can help improve the quality of the generated responses.
-    fn validate_messages(
-        messages: &Vec<OpenAIChatCompletionRequestText>,
-    ) -> Result<(), Exception> {
+    fn validate_messages(messages: &Vec<OpenAIChatCompletionRequestText>) -> Result<(), Exception> {
         if messages.len() < 2 {
             return Err(Exception::LanguageLogicException(BaseException::new(
                 "Messages must contain at least a system and a user message.".to_string(),
@@ -182,8 +180,10 @@ impl LanguageLogicUnit {
 
         if last_message.role != roles::USER_ROLE {
             return Err(Exception::LanguageLogicException(BaseException::new(
-                "Messages must end with a user message, but the last message has role '{}'."
-                    .to_string(),
+                format!(
+                    "Messages must end with a user message, but the last message has role '{}'.",
+                    last_message.role
+                ),
                 None,
             )));
         }
@@ -214,6 +214,7 @@ impl LanguageLogicUnit {
             content: content.to_string(),
         }))
         .collect::<Vec<OpenAIChatCompletionRequestText>>();
+
         let messages = match Self::merge_messages_by_role(&messages) {
             Ok(merged_messages) => merged_messages,
             Err(exception) => {

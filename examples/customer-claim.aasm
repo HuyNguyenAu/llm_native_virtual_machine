@@ -8,8 +8,8 @@ LS  X1, "The package arrived, but it looks like it didn't go through a blender."
 PSH X1                              ; Push the customer's statement onto the context stack for processing.
 
 ; Assess the customer's statement to determine if it indicates a damaged package.
-LS  X2, "Is the packaged damaged? Explain."
-DST X3, X2                          ; Audit the validity of the claim.
+LS  X2, "Is the package damaged based on the customer's statement?"
+MRF X3, X2                          ; Audit the validity of the claim.
 
 SRL "assistant"
 PSH X3                              ; Push the assessment result onto the context stack for final evaluation.

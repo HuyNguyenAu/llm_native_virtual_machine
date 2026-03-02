@@ -6,7 +6,12 @@
 LF  X1, "examples/data/msa_draft_v2.txt"
 LF  X2, "examples/data/gdpr_article_6.txt"
 
+LS  X3, "Contract draft:"
+PSH X3
 PSH X1              ; Push the contract draft onto the context stack for processing.
+
+LS  X3, "GDPR Article 6:"
+PSH X3
 PSH X2              ; Push the GDPR article onto the context stack for reference.
 
 ; Does the contract draft comply with GDPR Article 6 standards?
@@ -17,7 +22,7 @@ LI  X3, 100         ; Audit will return 100 if the contract is fully compliant w
 BGE X4, X3, PASS
 
 ; Identify specific sections of the contract draft that do not comply with GDPR Article 6.
-LS  X3, "Which specific sections of the contract are non-compliant with GDPR Article 6?"
+LS  X3, "Why is the contract draft not compliant with GDPR Article 6?"
 COR X5, X2
 
 LS  X3, "VIOLATIONS FOUND:"

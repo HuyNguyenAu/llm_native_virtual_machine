@@ -102,7 +102,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed LI: r{} = {:?}",
+            "Executed LI  : r{} = {:?}",
             instruction.destination_register,
             value
         );
@@ -130,7 +130,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed LI: r{} = {:?}",
+            "Executed LI  : r{} = {:?}",
             instruction.destination_register,
             value
         );
@@ -168,7 +168,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed LF: r{} = {:?}",
+            "Executed LF  : r{} = {:?}",
             instruction.destination_register,
             file_contents
         );
@@ -203,7 +203,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed MOV: r{} = {}",
+            "Executed MOV : r{} = {}",
             instruction.destination_register,
             value
         );
@@ -262,8 +262,14 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed {:?}: {:?} {:?} -> {} jump {}",
-            instruction.branch_type,
+            "Executed {} : {:?} {:?} -> {} jump {}",
+            match instruction.branch_type {
+                BranchType::Equal => "BEQ",
+                BranchType::Less => "BLT",
+                BranchType::LessEqual => "BLE",
+                BranchType::Greater => "BGT",
+                BranchType::GreaterEqual => "BGE",
+            },
             value_a,
             value_b,
             is_true,
@@ -295,7 +301,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed OUT: r{} = {:?}",
+            "Executed OUT : r{} = {:?}",
             instruction.source_register,
             value
         );
@@ -340,7 +346,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed MORPH: r{} = '{:?}'",
+            "Executed MRF : r{} = '{:?}'",
             instruction.destination_register,
             result
         );
@@ -384,7 +390,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed PROJECT: r{} = '{:?}'",
+            "Executed PRJ : r{} = '{:?}'",
             instruction.destination_register,
             result
         );
@@ -431,7 +437,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed DISTILL: r{} = '{:?}'",
+            "Executed DST : r{} = '{:?}'",
             instruction.destination_register,
             result
         );
@@ -479,7 +485,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed CORRELATE: r{} = '{:?}'",
+            "Executed CORR : r{} = '{:?}'",
             instruction.destination_register,
             result
         );
@@ -536,7 +542,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed AUDIT: r{} = '{:?}'",
+            "Executed AUD : r{} = '{:?}'",
             instruction.destination_register,
             result
         );
@@ -590,7 +596,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed SIMILARITY: '{:?}' vs '{:?}' -> r{} = {}",
+            "Executed SIM : '{:?}' vs '{:?}' -> r{} = {}",
             value_a,
             value_b,
             instruction.destination_register,
@@ -609,7 +615,7 @@ impl Executor {
     fn context_clear(registers: &mut Registers, debug: bool) {
         registers.clear_context();
 
-        crate::debug_print!(debug, "Executed CLR: Cleared context stack.");
+        crate::debug_print!(debug, "Executed CLR : Cleared context stack.");
     }
 
     fn context_snapshot(
@@ -632,7 +638,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed SNP: Snapshotted context stack into r{}.",
+            "Executed SNP : Snapshotted context stack into r{}.",
             instruction.destination_register
         );
 
@@ -666,7 +672,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed RST: Restored context stack from snapshot in r{}.",
+            "Executed RST : Restored context stack from snapshot in r{}.",
             instruction.source_register
         );
 
@@ -714,7 +720,7 @@ impl Executor {
         );
         crate::debug_print!(
             debug,
-            "Executed PSH: Pushed value from r{} onto context stack.",
+            "Executed PSH : Pushed value from r{} onto context stack.",
             instruction.source_register
         );
 
@@ -749,7 +755,7 @@ impl Executor {
             }
         }
 
-        crate::debug_print!(debug, "Executed POP: Popped value from context stack.",);
+        crate::debug_print!(debug, "Executed POP : Popped value from context stack.",);
 
         Ok(())
     }
@@ -765,7 +771,7 @@ impl Executor {
             }
         }
 
-        crate::debug_print!(debug, "Executed DRP: Dropped value from context stack.",);
+        crate::debug_print!(debug, "Executed DRP : Dropped value from context stack.",);
 
         Ok(())
     }
@@ -779,7 +785,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed SRL: Set context role to '{}'.",
+            "Executed SRL : Set context role to '{}'.",
             instruction.role
         );
     }
@@ -823,7 +829,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed DEC: Decremented r{} from {} to {}.",
+            "Executed DEC : Decremented r{} from {} to {}.",
             instruction.source_register,
             value,
             new_value

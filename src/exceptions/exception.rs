@@ -1,16 +1,24 @@
-use std::{error::Error, fmt};
+use std::{
+    error::Error,
+    fmt::{self},
+};
 
 #[derive(Debug)]
 pub struct BaseException {
+    pub location: String,
     pub message: String,
     pub inner_exception: Option<Box<Exception>>,
 }
 
 impl BaseException {
+    #[track_caller]
     pub fn new(message: String, inner_exception: Option<Box<Exception>>) -> Self {
+        let caller = std::panic::Location::caller();
+
         BaseException {
             message,
             inner_exception,
+            location: format!("{}:{}:{}", caller.file(), caller.line(), caller.column()),
         }
     }
 }

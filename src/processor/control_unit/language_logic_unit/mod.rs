@@ -75,7 +75,7 @@ impl LanguageLogicUnit {
     // Merge consecutive messages with the same role into a single message,
     // joining their content with a newline. This version is easier to follow:
     fn merge_messages_by_role(
-        messages: &Vec<OpenAIChatCompletionRequestText>,
+        messages: &[OpenAIChatCompletionRequestText],
     ) -> Result<Vec<OpenAIChatCompletionRequestText>, Exception> {
         if messages.is_empty() {
             return Ok(Vec::new());
@@ -104,7 +104,7 @@ impl LanguageLogicUnit {
     // This is because the assistant role is meant to provide additional context to the model, and should not be the final message that
     // the model sees before generating a response. By enforcing this structure, we can ensure that the model receives a clear and consistent
     // input format, which can help improve the quality of the generated responses.
-    fn validate_messages(messages: &Vec<OpenAIChatCompletionRequestText>) -> Result<(), Exception> {
+    fn validate_messages(messages: &[OpenAIChatCompletionRequestText]) -> Result<(), Exception> {
         if messages.len() < 2 {
             return Err(Exception::LanguageLogic(BaseException::new(
                 "Messages must contain at least a system and a user message.".to_string(),
@@ -175,7 +175,7 @@ impl LanguageLogicUnit {
 
     fn chat(
         content: &str,
-        context: &Vec<ContextMessage>,
+        context: &[ContextMessage],
         text_model: &str,
     ) -> Result<String, Exception> {
         let model = Self::default_text_model(text_model);

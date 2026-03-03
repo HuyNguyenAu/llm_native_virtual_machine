@@ -106,7 +106,7 @@ impl LanguageLogicUnit {
     // input format, which can help improve the quality of the generated responses.
     fn validate_messages(messages: &Vec<OpenAIChatCompletionRequestText>) -> Result<(), Exception> {
         if messages.len() < 2 {
-            return Err(Exception::LanguageLogicException(BaseException::new(
+            return Err(Exception::LanguageLogic(BaseException::new(
                 "Messages must contain at least a system and a user message.".to_string(),
                 None,
             )));
@@ -114,14 +114,14 @@ impl LanguageLogicUnit {
 
         // Must start with system message and then user message.
         if messages[0].role != roles::SYSTEM_ROLE {
-            return Err(Exception::LanguageLogicException(BaseException::new(
+            return Err(Exception::LanguageLogic(BaseException::new(
                 "The first message must be a system message.".to_string(),
                 None,
             )));
         }
 
         if messages[1].role != roles::USER_ROLE {
-            return Err(Exception::LanguageLogicException(BaseException::new(
+            return Err(Exception::LanguageLogic(BaseException::new(
                 "The second message must be a user message.".to_string(),
                 None,
             )));
@@ -133,7 +133,7 @@ impl LanguageLogicUnit {
 
         for message in messages.iter().skip(2) {
             if message.role != expected_role {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     format!(
                         "Unexpected role '{}' in messages, expected '{}'.",
                         message.role, expected_role
@@ -153,7 +153,7 @@ impl LanguageLogicUnit {
         let last_message = match messages.last() {
             Some(message) => message,
             None => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "Messages cannot be empty.".to_string(),
                     None,
                 )));
@@ -161,7 +161,7 @@ impl LanguageLogicUnit {
         };
 
         if last_message.role != roles::USER_ROLE {
-            return Err(Exception::LanguageLogicException(BaseException::new(
+            return Err(Exception::LanguageLogic(BaseException::new(
                 format!(
                     "Messages must end with a user message, but the last message has role '{}'.",
                     last_message.role
@@ -200,7 +200,7 @@ impl LanguageLogicUnit {
         let messages = match Self::merge_messages_by_role(&messages) {
             Ok(merged_messages) => merged_messages,
             Err(exception) => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "Failed to execute chat completion.".to_string(),
                     Some(Box::new(exception)),
                 )));
@@ -210,7 +210,7 @@ impl LanguageLogicUnit {
         match Self::validate_messages(&messages) {
             Ok(_) => {}
             Err(exception) => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "Failed to execute chat completion.".to_string(),
                     Some(Box::new(exception)),
                 )));
@@ -247,7 +247,7 @@ impl LanguageLogicUnit {
         let response = match OpenAIClient::chat_completion(request) {
             Ok(response) => response,
             Err(exception) => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "Failed to execute chat completion.".to_string(),
                     Some(Box::new(exception)),
                 )));
@@ -257,7 +257,7 @@ impl LanguageLogicUnit {
         let choice = match response.choices.first() {
             Some(choice) => choice,
             None => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "No choices returned from client.".to_string(),
                     None,
                 )));
@@ -278,7 +278,7 @@ impl LanguageLogicUnit {
         let response = match OpenAIClient::embeddings(request) {
             Ok(response) => response,
             Err(exception) => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "Failed to get embeddings response from client.".to_string(),
                     Some(Box::new(exception)),
                 )));
@@ -288,7 +288,7 @@ impl LanguageLogicUnit {
         let embeddings = match response.data.first() {
             Some(embedding) => embedding,
             None => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "No embeddings returned from client.".to_string(),
                     None,
                 )));
@@ -306,7 +306,7 @@ impl LanguageLogicUnit {
         let value_a_embeddings = match Self::embeddings(value_a, embedding_model) {
             Ok(embeddings) => embeddings,
             Err(exception) => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     format!("Failed to get embedding for value a \"{}\".", value_a),
                     Some(Box::new(exception)),
                 )));
@@ -315,7 +315,7 @@ impl LanguageLogicUnit {
         let value_b_embeddings = match Self::embeddings(value_b, embedding_model) {
             Ok(embeddings) => embeddings,
             Err(exception) => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     format!("Failed to get embedding for value b \"{}\".", value_b),
                     Some(Box::new(exception)),
                 )));
@@ -344,7 +344,7 @@ impl LanguageLogicUnit {
         let result = match Self::chat(micro_prompt, context, text_model) {
             Ok(result) => result,
             Err(exception) => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "Failed to execute string operation.".to_string(),
                     Some(Box::new(exception)),
                 )));
@@ -365,7 +365,7 @@ impl LanguageLogicUnit {
         let value = match Self::string(micro_prompt, context, text_model) {
             Ok(value) => value,
             Err(exception) => {
-                return Err(Exception::LanguageLogicException(BaseException::new(
+                return Err(Exception::LanguageLogic(BaseException::new(
                     "Failed to execute boolean operation.".to_string(),
                     Some(Box::new(exception)),
                 )));
@@ -382,7 +382,7 @@ impl LanguageLogicUnit {
             ) {
                 Ok(score) => true_scores.push(score),
                 Err(exception) => {
-                    return Err(Exception::LanguageLogicException(BaseException::new(
+                    return Err(Exception::LanguageLogic(BaseException::new(
                         format!(
                             "Failed to execute boolean operation for true value '{}'.",
                             true_value
@@ -403,7 +403,7 @@ impl LanguageLogicUnit {
             ) {
                 Ok(score) => false_scores.push(score),
                 Err(exception) => {
-                    return Err(Exception::LanguageLogicException(BaseException::new(
+                    return Err(Exception::LanguageLogic(BaseException::new(
                         format!(
                             "Failed to execute boolean operation for false value '{}'.",
                             false_value

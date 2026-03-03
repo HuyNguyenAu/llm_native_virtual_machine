@@ -16,7 +16,7 @@ impl Memory {
     pub fn read(&self, address: usize) -> Result<&[u8; 4], Exception> {
         match self.data.get(address) {
             Some(instruction) => Ok(instruction),
-            None => Err(Exception::MemoryException(BaseException::new(
+            None => Err(Exception::Memory(BaseException::new(
                 format!("Address out of bounds: {}", address),
                 None,
             ))),

@@ -37,40 +37,40 @@ impl From<Exception> for BaseException {
             Exception::BaseException(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
-            Exception::ProgramException(exception) => {
+            Exception::Program(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
             // OpenAI client exceptions.
-            Exception::OpenAIChatCompletionException(exception) => {
+            Exception::OpenAIChatCompletion(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
-            Exception::OpenAIEmbeddingsException(exception) => {
+            Exception::OpenAIEmbeddings(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
             // Language logic unit exceptions.
-            Exception::LanguageLogicException(exception) => {
+            Exception::LanguageLogic(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
             // Control unit exceptions.
-            Exception::ControlUnitException(exception) => {
+            Exception::ControlUnit(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
-            Exception::DecoderException(exception) => {
+            Exception::Decoder(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
-            Exception::ExecutorException(exception) => {
+            Exception::Executor(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
             // Processor exceptions.
-            Exception::ProcessorException(exception) => {
+            Exception::Processor(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
             // Memory exceptions.
-            Exception::MemoryException(exception) => {
+            Exception::Memory(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
             // Register exceptions.
-            Exception::RegisterException(exception) => {
+            Exception::Register(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
         }
@@ -80,22 +80,22 @@ impl From<Exception> for BaseException {
 #[derive(Debug)]
 pub enum Exception {
     BaseException(BaseException),
-    ProgramException(BaseException),
+    Program(BaseException),
     // OpenAI client exceptions.
-    OpenAIChatCompletionException(BaseException),
-    OpenAIEmbeddingsException(BaseException),
+    OpenAIChatCompletion(BaseException),
+    OpenAIEmbeddings(BaseException),
     // Language logic unit exceptions.
-    LanguageLogicException(BaseException),
+    LanguageLogic(BaseException),
     // Control unit exceptions.
-    ControlUnitException(BaseException),
-    DecoderException(BaseException),
-    ExecutorException(BaseException),
+    ControlUnit(BaseException),
+    Decoder(BaseException),
+    Executor(BaseException),
     // Processor exceptions.
-    ProcessorException(BaseException),
+    Processor(BaseException),
     // Memory exceptions.
-    MemoryException(BaseException),
+    Memory(BaseException),
     // Register exceptions.
-    RegisterException(BaseException),
+    Register(BaseException),
 }
 
 impl From<std::io::Error> for Exception {

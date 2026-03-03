@@ -32,7 +32,7 @@ impl ControlUnit {
             *slot = match self.memory.read(instruction_pointer + i) {
                 Ok(bytes) => *bytes,
                 Err(exception) => {
-                    return Err(Exception::ControlUnitException(BaseException::new(
+                    return Err(Exception::ControlUnit(BaseException::new(
                         format!(
                             "Failed to read instruction at {}: no data found",
                             instruction_pointer + i
@@ -50,7 +50,7 @@ impl ControlUnit {
         let pointer_bytes = match byte_code.get(index) {
             Some(bytes) => bytes,
             None => {
-                return Err(Exception::ControlUnitException(BaseException::new(
+                return Err(Exception::ControlUnit(BaseException::new(
                     format!(
                         "Failed to read header pointer at index {}: no data found",
                         index
@@ -62,7 +62,7 @@ impl ControlUnit {
 
         match u32::from_be_bytes(*pointer_bytes).try_into() {
             Ok(pointer) => Ok(pointer),
-            Err(error) => Err(Exception::ControlUnitException(BaseException::new(
+            Err(error) => Err(Exception::ControlUnit(BaseException::new(
                 format!(
                     "Failed to read header pointer at index {}: invalid pointer value",
                     index
@@ -76,7 +76,7 @@ impl ControlUnit {
         let instruction_section_pointer = match self.header_pointer(0, &byte_code) {
             Ok(pointer) => pointer,
             Err(exception) => {
-                return Err(Exception::ControlUnitException(BaseException::new(
+                return Err(Exception::ControlUnit(BaseException::new(
                     "Control Unit failed to load byte code: invalid instruction section pointer"
                         .to_string(),
                     Some(Box::new(exception)),
@@ -86,7 +86,7 @@ impl ControlUnit {
         let data_section_pointer = match self.header_pointer(1, &byte_code) {
             Ok(pointer) => pointer,
             Err(exception) => {
-                return Err(Exception::ControlUnitException(BaseException::new(
+                return Err(Exception::ControlUnit(BaseException::new(
                     "Control Unit failed to load byte code: invalid data section pointer"
                         .to_string(),
                     Some(Box::new(exception)),
@@ -113,7 +113,7 @@ impl ControlUnit {
         let instruction_bytes = match self.read_instruction() {
             Ok(bytes) => bytes,
             Err(exception) => {
-                return Err(Exception::ControlUnitException(BaseException::new(
+                return Err(Exception::ControlUnit(BaseException::new(
                     "Control Unit failed to fetch instruction: unable to read instruction bytes"
                         .to_string(),
                     Some(Box::new(exception)),
@@ -131,7 +131,7 @@ impl ControlUnit {
         let bytes = match self.registers.get_instruction() {
             Some(bytes) => bytes,
             None => {
-                return Err(Exception::ControlUnitException(BaseException::new(
+                return Err(Exception::ControlUnit(BaseException::new(
                     "Control Unit failed to decode instruction: no instruction bytes found"
                         .to_string(),
                     None,
@@ -141,7 +141,7 @@ impl ControlUnit {
 
         match Decoder::decode(&self.memory, &self.registers, bytes) {
             Ok(instruction) => Ok(instruction),
-            Err(exception) => Err(Exception::ControlUnitException(BaseException::new(
+            Err(exception) => Err(Exception::ControlUnit(BaseException::new(
                 "Control Unit failed to decode instruction.".to_string(),
                 Some(Box::new(exception)),
             ))),
@@ -164,7 +164,7 @@ impl ControlUnit {
             debug,
         ) {
             Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::ControlUnitException(BaseException::new(
+            Err(exception) => Err(Exception::ControlUnit(BaseException::new(
                 "Control Unit failed to execute instruction.".to_string(),
                 Some(Box::new(exception)),
             ))),

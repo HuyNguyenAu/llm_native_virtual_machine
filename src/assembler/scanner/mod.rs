@@ -12,11 +12,11 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    pub fn new(source: &str) -> Self {
+    pub fn new(source: String) -> Self {
         let source_len = source.len();
 
         Scanner {
-            source: source.to_string(),
+            source,
             current: 0,
             start: 0,
             line: 1,

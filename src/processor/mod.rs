@@ -40,9 +40,7 @@ impl Processor {
                 Ok(bytes) => byte_code.push(bytes),
                 Err(error) => {
                     return Err(Exception::ProcessorException(BaseException::new(
-                        format!(
-                            "Processor failed to load byte code. Byte code chunks must be exactly 4 bytes."
-                        ),
+                        "Processor failed to load byte code. Byte code chunks must be exactly 4 bytes.".to_string(),
                         Some(Box::new(format!("{:#?}", error).into())),
                     )));
                 }
@@ -51,12 +49,10 @@ impl Processor {
 
         match self.control_unit.load(byte_code) {
             Ok(_) => Ok(()),
-            Err(exception) => {
-                return Err(Exception::ProcessorException(BaseException::new(
-                    "Processor failed to load byte code into control unit.".to_string(),
-                    Some(Box::new(exception.into())),
-                )));
-            }
+            Err(exception) => Err(Exception::ProcessorException(BaseException::new(
+                "Processor failed to load byte code into control unit.".to_string(),
+                Some(Box::new(exception)),
+            ))),
         }
     }
 
@@ -71,7 +67,7 @@ impl Processor {
                 Err(exception) => {
                     return Err(Exception::ProcessorException(BaseException::new(
                         "Processor failed to fetch instruction.".to_string(),
-                        Some(Box::new(exception.into())),
+                        Some(Box::new(exception)),
                     )));
                 }
             }
@@ -81,7 +77,7 @@ impl Processor {
                 Err(exception) => {
                     return Err(Exception::ProcessorException(BaseException::new(
                         "Processor failed to decode instruction.".to_string(),
-                        Some(Box::new(exception.into())),
+                        Some(Box::new(exception)),
                     )));
                 }
             };
@@ -96,7 +92,7 @@ impl Processor {
                 Err(exception) => {
                     return Err(Exception::ProcessorException(BaseException::new(
                         "Processor failed to execute instruction.".to_string(),
-                        Some(Box::new(exception.into())),
+                        Some(Box::new(exception)),
                     )));
                 }
             }

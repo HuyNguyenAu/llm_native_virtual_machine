@@ -156,7 +156,7 @@ fn run(file_path: &str, config: &Config) -> Result<(), Exception> {
         Err(exception) => {
             return Err(Exception::ProgramException(BaseException::new(
                 "Failed to run. Failed to load byte code file.".to_string(),
-                Some(Box::new(exception.into())),
+                Some(Box::new(exception)),
             )));
         }
     }
@@ -166,7 +166,7 @@ fn run(file_path: &str, config: &Config) -> Result<(), Exception> {
         Err(exception) => {
             return Err(Exception::ProgramException(BaseException::new(
                 "Failed to run program.".to_string(),
-                Some(Box::new(exception.into())),
+                Some(Box::new(exception)),
             )));
         }
     }
@@ -210,24 +210,16 @@ fn main() {
     match command.as_str() {
         "build" => match build(file_path, &config) {
             Ok(_) => (),
-            Err(exception) => {
-                println!("Build error: {}", exception);
-                return;
-            }
+            Err(exception) => println!("Build error: {}", exception),
         },
         "run" => match run(file_path, &config) {
             Ok(_) => (),
-            Err(exception) => {
-                println!("Run error: {}", exception);
-                return;
-            }
+            Err(exception) => println!("Run error: {}", exception),
         },
-        unexpected_command => {
-            println!(
-                "Unknown command: {}. {}",
-                unexpected_command,
-                constants::HELP_USAGE
-            );
-        }
+        unexpected_command => println!(
+            "Unknown command: {}. {}",
+            unexpected_command,
+            constants::HELP_USAGE
+        ),
     }
 }

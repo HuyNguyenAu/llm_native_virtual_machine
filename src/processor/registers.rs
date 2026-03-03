@@ -90,7 +90,7 @@ impl Registers {
             Err(error) => {
                 return Err(Exception::RegisterException(BaseException::new(
                     format!("Failed to get register: {}", error),
-                    Some(Box::new(error.into())),
+                    Some(Box::new(error)),
                 )));
             }
         };
@@ -104,7 +104,7 @@ impl Registers {
             Err(error) => {
                 return Err(Exception::RegisterException(BaseException::new(
                     format!("Failed to set register: {}", error),
-                    Some(Box::new(error.into())),
+                    Some(Box::new(error)),
                 )));
             }
         };

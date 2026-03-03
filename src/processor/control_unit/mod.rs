@@ -37,7 +37,7 @@ impl ControlUnit {
                             "Failed to read instruction at {}: no data found",
                             instruction_pointer + i
                         ),
-                        Some(Box::new(exception.into())),
+                        Some(Box::new(exception)),
                     )));
                 }
             }
@@ -79,7 +79,7 @@ impl ControlUnit {
                 return Err(Exception::ControlUnitException(BaseException::new(
                     "Control Unit failed to load byte code: invalid instruction section pointer"
                         .to_string(),
-                    Some(Box::new(exception.into())),
+                    Some(Box::new(exception)),
                 )));
             }
         };
@@ -89,7 +89,7 @@ impl ControlUnit {
                 return Err(Exception::ControlUnitException(BaseException::new(
                     "Control Unit failed to load byte code: invalid data section pointer"
                         .to_string(),
-                    Some(Box::new(exception.into())),
+                    Some(Box::new(exception)),
                 )));
             }
         };
@@ -116,7 +116,7 @@ impl ControlUnit {
                 return Err(Exception::ControlUnitException(BaseException::new(
                     "Control Unit failed to fetch instruction: unable to read instruction bytes"
                         .to_string(),
-                    Some(Box::new(exception.into())),
+                    Some(Box::new(exception)),
                 )));
             }
         };
@@ -142,8 +142,8 @@ impl ControlUnit {
         match Decoder::decode(&self.memory, &self.registers, bytes) {
             Ok(instruction) => Ok(instruction),
             Err(exception) => Err(Exception::ControlUnitException(BaseException::new(
-                format!("Control Unit failed to decode instruction."),
-                Some(Box::new(exception.into())),
+                "Control Unit failed to decode instruction.".to_string(),
+                Some(Box::new(exception)),
             ))),
         }
     }
@@ -166,7 +166,7 @@ impl ControlUnit {
             Ok(_) => Ok(()),
             Err(exception) => Err(Exception::ControlUnitException(BaseException::new(
                 "Control Unit failed to execute instruction.".to_string(),
-                Some(Box::new(exception.into())),
+                Some(Box::new(exception)),
             ))),
         }
     }

@@ -338,7 +338,7 @@ impl LanguageLogicUnit {
 
     pub fn string(
         micro_prompt: &str,
-        context: &Vec<ContextMessage>,
+        context: &[ContextMessage],
         text_model: &str,
     ) -> Result<String, Exception> {
         let result = match Self::chat(micro_prompt, context, text_model) {
@@ -356,9 +356,9 @@ impl LanguageLogicUnit {
 
     pub fn boolean(
         micro_prompt: &str,
-        true_values: Vec<&str>,
-        false_values: Vec<&str>,
-        context: &Vec<ContextMessage>,
+        true_values: &[&str],
+        false_values: &[&str],
+        context: &[ContextMessage],
         text_model: &str,
         embedding_model: &str,
     ) -> Result<u32, Exception> {
@@ -374,7 +374,7 @@ impl LanguageLogicUnit {
 
         let mut true_scores = Vec::<u32>::new();
 
-        for true_value in &true_values {
+        for true_value in true_values {
             match Self::cosine_similarity(
                 &value.to_lowercase(),
                 &true_value.to_lowercase(),
@@ -395,7 +395,7 @@ impl LanguageLogicUnit {
 
         let mut false_scores = Vec::<u32>::new();
 
-        for false_value in &false_values {
+        for false_value in false_values {
             match Self::cosine_similarity(
                 &value.to_lowercase(),
                 &false_value.to_lowercase(),

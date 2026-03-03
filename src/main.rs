@@ -151,7 +151,7 @@ fn run(file_path: &str, config: &Config) -> Result<(), Exception> {
 
     let mut processor = processor::Processor::new(config.clone());
 
-    match processor.load(data) {
+    match processor.load(&data) {
         Ok(_) => (),
         Err(exception) => {
             return Err(Exception::Program(BaseException::new(

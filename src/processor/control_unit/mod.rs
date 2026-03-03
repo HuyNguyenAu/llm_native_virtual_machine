@@ -72,8 +72,8 @@ impl ControlUnit {
         }
     }
 
-    pub fn load(&mut self, byte_code: Vec<[u8; 4]>) -> Result<(), Exception> {
-        let instruction_section_pointer = match self.header_pointer(0, &byte_code) {
+    pub fn load(&mut self, byte_code: &[[u8; 4]]) -> Result<(), Exception> {
+        let instruction_section_pointer = match self.header_pointer(0, byte_code) {
             Ok(pointer) => pointer,
             Err(exception) => {
                 return Err(Exception::ControlUnit(BaseException::new(
@@ -83,7 +83,7 @@ impl ControlUnit {
                 )));
             }
         };
-        let data_section_pointer = match self.header_pointer(1, &byte_code) {
+        let data_section_pointer = match self.header_pointer(1, byte_code) {
             Ok(pointer) => pointer,
             Err(exception) => {
                 return Err(Exception::ControlUnit(BaseException::new(

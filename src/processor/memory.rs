@@ -9,8 +9,8 @@ impl Memory {
         Memory { data: Vec::new() }
     }
 
-    pub fn load(&mut self, byte_code: Vec<[u8; 4]>) {
-        self.data = byte_code;
+    pub fn load(&mut self, byte_code: &[[u8; 4]]) {
+        self.data = byte_code.to_vec();
     }
 
     pub fn read(&self, address: usize) -> Result<&[u8; 4], Exception> {

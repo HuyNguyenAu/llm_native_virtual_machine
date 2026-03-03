@@ -21,7 +21,7 @@ impl Processor {
         }
     }
 
-    pub fn load(&mut self, data: Vec<u8>) -> Result<(), Exception> {
+    pub fn load(&mut self, data: &[u8]) -> Result<(), Exception> {
         if !data.len().is_multiple_of(4) {
             return Err(Exception::Processor(BaseException::new(
                 format!(
@@ -47,7 +47,7 @@ impl Processor {
             }
         }
 
-        match self.control_unit.load(byte_code) {
+        match self.control_unit.load(&byte_code) {
             Ok(_) => Ok(()),
             Err(exception) => Err(Exception::Processor(BaseException::new(
                 "Processor failed to load byte code into control unit.".to_string(),

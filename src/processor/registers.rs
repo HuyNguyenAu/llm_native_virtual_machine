@@ -145,7 +145,7 @@ impl Registers {
         self.context.clear();
     }
 
-    pub fn get_context(&self) -> &Vec<ContextMessage> {
+    pub fn get_context(&self) -> &[ContextMessage] {
         &self.context
     }
 

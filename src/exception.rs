@@ -130,8 +130,6 @@ impl From<String> for Exception {
 
 impl fmt::Display for Exception {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            _ => write!(formatter, "{:#?}", self),
-        }
+        write!(formatter, "{:#?}", self)
     }
 }

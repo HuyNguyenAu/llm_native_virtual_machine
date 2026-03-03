@@ -46,7 +46,7 @@ pub enum TokenType {
 }
 
 impl TryFrom<&str> for TokenType {
-    type Error = &'static str;
+    type Error = String;
 
     fn try_from(value: &str) -> Result<Self, <TokenType as TryFrom<&str>>::Error> {
         match value {
@@ -83,7 +83,7 @@ impl TryFrom<&str> for TokenType {
             "srl" => Ok(TokenType::ContextSetRole),
             // Misc operations.
             "dec" => Ok(TokenType::Decrement),
-            _ => Err("String does not correspond to any known token type."),
+            _ => Err("String does not correspond to any known token type.".to_string()),
         }
     }
 }
@@ -95,7 +95,7 @@ pub struct Token {
     end: usize,
     line: usize,
     column: usize,
-    error: Option<&'static str>,
+    error: Option<String>,
 }
 
 impl Token {
@@ -105,7 +105,7 @@ impl Token {
         end: usize,
         line: usize,
         column: usize,
-        error: Option<&'static str>,
+        error: Option<String>,
     ) -> Token {
         Token {
             token_type,
@@ -137,7 +137,7 @@ impl Token {
         self.column
     }
 
-    pub fn error(&self) -> Option<&'static str> {
-        self.error
+    pub fn error(&self) -> Option<String> {
+        self.error.clone()
     }
 }

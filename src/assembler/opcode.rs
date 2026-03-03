@@ -38,7 +38,7 @@ pub enum OpCode {
 }
 
 impl TryFrom<u32> for OpCode {
-    type Error = &'static str;
+    type Error = String;
 
     fn try_from(value: u32) -> Result<Self, <OpCode as TryFrom<u32>>::Error> {
         match value {
@@ -75,7 +75,7 @@ impl TryFrom<u32> for OpCode {
             x if x == OpCode::ContextSetRole as u32 => Ok(OpCode::ContextSetRole),
             // Misc.
             x if x == OpCode::Decrement as u32 => Ok(OpCode::Decrement),
-            _ => Err("Byte value does not correspond to any known opcode."),
+            _ => Err("Byte value does not correspond to any known opcode.".to_string()),
         }
     }
 }
@@ -91,7 +91,7 @@ impl OpCode {
         (self as u32).to_be_bytes()
     }
 
-    pub fn from_be_bytes(bytes: [u8; 4]) -> Result<OpCode, &'static str> {
+    pub fn from_be_bytes(bytes: [u8; 4]) -> Result<OpCode, String> {
         let value = u32::from_be_bytes(bytes);
         OpCode::try_from(value)
     }

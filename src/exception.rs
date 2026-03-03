@@ -40,6 +40,9 @@ impl From<Exception> for BaseException {
             Exception::Program(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
             }
+            Exception::Assembler(exception) => {
+                BaseException::new(exception.message, exception.inner_exception)
+            }
             // OpenAI client exceptions.
             Exception::OpenAIChatCompletion(exception) => {
                 BaseException::new(exception.message, exception.inner_exception)
@@ -81,6 +84,7 @@ impl From<Exception> for BaseException {
 pub enum Exception {
     BaseException(BaseException),
     Program(BaseException),
+    Assembler(BaseException),
     // OpenAI client exceptions.
     OpenAIChatCompletion(BaseException),
     OpenAIEmbeddings(BaseException),

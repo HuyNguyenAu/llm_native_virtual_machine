@@ -85,7 +85,6 @@ fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
             )));
         }
     };
-    let source: &'static str = Box::leak(Box::new(source));
 
     let mut compiler = assembler::Assembler::new(source);
     let byte_code = match compiler.assemble() {

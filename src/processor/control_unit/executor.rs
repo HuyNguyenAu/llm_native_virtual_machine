@@ -525,8 +525,8 @@ impl Executor {
 
         let result = match LanguageLogicUnit::boolean(
             &micro_prompt,
-            true_values,
-            false_values,
+            &true_values,
+            &false_values,
             context,
             text_model,
             embedding_model,

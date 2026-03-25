@@ -1,6 +1,7 @@
 use std::{
     error::Error,
-    fmt::{self}, num::ParseIntError,
+    fmt::{self},
+    num::ParseIntError,
 };
 
 #[derive(Debug)]

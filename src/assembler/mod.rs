@@ -572,6 +572,48 @@ impl Assembler {
         Ok(())
     }
 
+    fn parse_instruction(&mut self, token_type: &TokenType) -> Result<(), Exception> {
+        let op_code: OpCode = token_type.clone().into();
+
+        match token_type {
+            // Data movement.
+            TokenType::LoadImmediate => self.immediate(token_type, op_code, false, false),
+            TokenType::LoadString | TokenType::LoadFile => {
+                self.immediate(token_type, op_code, true, false)
+            }
+            TokenType::Move => self.double_register(token_type, op_code),
+            // Control flow.
+            TokenType::BranchEqual
+            | TokenType::BranchLess
+            | TokenType::BranchLessEqual
+            | TokenType::BranchGreater
+            | TokenType::BranchGreaterEqual => self.branch(token_type, op_code),
+            TokenType::Exit => self.no_register(token_type, op_code),
+            TokenType::Label => self.label(),
+            // I/O.
+            TokenType::Out => self.single_register(token_type, op_code),
+            // Generative, cognitive, and guardrails operations.
+            TokenType::Morph
+            | TokenType::Project
+            | TokenType::Distill
+            | TokenType::Correlate
+            | TokenType::Audit => self.double_register(token_type, op_code),
+            TokenType::Similarity => self.triple_register(token_type, op_code),
+            // Context operations.
+            TokenType::ContextClear | TokenType::ContextDrop => {
+                self.no_register(token_type, op_code)
+            }
+            TokenType::ContextSnapshot
+            | TokenType::ContextRestore
+            | TokenType::ContextPush
+            | TokenType::ContextPop => self.single_register(token_type, op_code),
+            TokenType::ContextSetRole => self.no_register_string(token_type, op_code),
+            // Misc operations.
+            TokenType::Decrement => self.immediate(token_type, op_code, false, true),
+            _ => self.error_at_current("Unexpected keyword."),
+        }
+    }
+
     pub fn assemble(&mut self) -> Result<Vec<u8>, Exception> {
         self.advance()?;
 
@@ -582,51 +624,11 @@ impl Assembler {
                 .map(|token| token.token_type().clone())
                 .unwrap_or(TokenType::Eof);
 
-            let op_code: OpCode = token_type.clone().into();
-
             if token_type == TokenType::Eof {
                 break;
             }
 
-            let result = match token_type {
-                 // Data movement.
-                TokenType::LoadImmediate => self.immediate(&token_type, op_code, false, false),
-                TokenType::LoadString | TokenType::LoadFile => {
-                    self.immediate(&token_type, op_code, true, false)
-                }
-                TokenType::Move => self.double_register(&token_type, op_code),
-                 // Control flow.
-                TokenType::BranchEqual
-                | TokenType::BranchLess
-                | TokenType::BranchLessEqual
-                | TokenType::BranchGreater
-                | TokenType::BranchGreaterEqual => self.branch(&token_type, op_code),
-                TokenType::Exit => self.no_register(&token_type, op_code),
-                TokenType::Label => self.label(),
-                 // I/O.
-                TokenType::Out => self.single_register(&token_type, op_code),
-                 // Generative, cognitive, and guardrails operations.
-                TokenType::Morph
-                | TokenType::Project
-                | TokenType::Distill
-                | TokenType::Correlate
-                | TokenType::Audit => self.double_register(&token_type, op_code),
-                TokenType::Similarity => self.triple_register(&token_type, op_code),
-                // Context operations.
-                TokenType::ContextClear | TokenType::ContextDrop => {
-                    self.no_register(&token_type, op_code)
-                }
-                TokenType::ContextSnapshot
-                | TokenType::ContextRestore
-                | TokenType::ContextPush
-                | TokenType::ContextPop => self.single_register(&token_type, op_code),
-                TokenType::ContextSetRole => self.no_register_string(&token_type, op_code),
-                 // Misc operations.
-                TokenType::Decrement => self.immediate(&token_type, op_code, false, true),
-                _ => self.error_at_current("Unexpected keyword."),
-            };
-
-            result?;
+            self.parse_instruction(&token_type)?;
         }
 
         if self.had_error {

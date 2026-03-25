@@ -28,50 +28,42 @@ impl OpenAIClient {
         let response = match post(&url).with_body(body).send() {
             Ok(response) => response,
             Err(error) => {
-                return Err(Exception::OpenAIChatCompletion(
-                    BaseException::new(
-                        "Failed to send chat request.".to_string(),
-                        Some(Box::new(error.into())),
-                    ),
-                ));
+                return Err(Exception::OpenAIChatCompletion(BaseException::new(
+                    "Failed to send chat request.".to_string(),
+                    Some(Box::new(error.into())),
+                )));
             }
         };
 
         if response.status_code != 200 {
-            return Err(Exception::OpenAIChatCompletion(
-                BaseException::new(
-                    format!(
-                        "Chat request failed with status code: {}. {}",
-                        response.status_code, response.reason_phrase
-                    ),
-                    None,
+            return Err(Exception::OpenAIChatCompletion(BaseException::new(
+                format!(
+                    "Chat request failed with status code: {}. {}",
+                    response.status_code, response.reason_phrase
                 ),
-            ));
+                None,
+            )));
         }
 
         let text = match response.as_str() {
             Ok(text) => text,
             Err(error) => {
-                return Err(Exception::OpenAIChatCompletion(
-                    BaseException::new(
-                        format!("Failed to read chat response text. Error: {}", error),
-                        Some(Box::new(error.into())),
-                    ),
-                ));
+                return Err(Exception::OpenAIChatCompletion(BaseException::new(
+                    format!("Failed to read chat response text. Error: {}", error),
+                    Some(Box::new(error.into())),
+                )));
             }
         };
 
         match from_str::<OpenAIChatCompletionResponse>(text) {
             Ok(parsed_response) => Ok(parsed_response),
-            Err(error) => Err(Exception::OpenAIChatCompletion(
-                BaseException::new(
-                    format!(
-                        "Failed to deserialise chat response JSON. Response Text: {}",
-                        text
-                    ),
-                    Some(Box::new(error.into())),
+            Err(error) => Err(Exception::OpenAIChatCompletion(BaseException::new(
+                format!(
+                    "Failed to deserialise chat response JSON. Response Text: {}",
+                    text
                 ),
-            )),
+                Some(Box::new(error.into())),
+            ))),
         }
     }
 

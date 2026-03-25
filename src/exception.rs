@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    fmt::{self},
+    fmt::{self}, num::ParseIntError,
 };
 
 #[derive(Debug)]
@@ -129,6 +129,12 @@ impl From<miniserde::Error> for Exception {
 impl From<String> for Exception {
     fn from(message: String) -> Self {
         Exception::BaseException(BaseException::new(message, None))
+    }
+}
+
+impl From<ParseIntError> for Exception {
+    fn from(error: ParseIntError) -> Self {
+        Exception::BaseException(BaseException::new(format!("{}", error), None))
     }
 }
 

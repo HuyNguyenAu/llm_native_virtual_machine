@@ -197,9 +197,7 @@ impl Assembler {
     }
 
     fn number(&mut self, message: &str) -> Result<u32, Exception> {
-        if let Err(exception) = self.consume(&TokenType::Number, message) {
-            return Err(exception);
-        }
+        self.consume(&TokenType::Number, message)?;
 
         let previous_lexeme = match self.previous_lexeme() {
             Ok(lexeme) => lexeme,
@@ -231,9 +229,7 @@ impl Assembler {
     }
 
     fn register(&mut self, message: &str) -> Result<u32, Exception> {
-        if let Err(exception) = self.consume(&TokenType::Identifier, message) {
-            return Err(exception);
-        }
+        self.consume(&TokenType::Identifier, message)?;
 
         let lexeme = match self.previous_lexeme() {
             Ok(lexeme) => lexeme,
@@ -293,9 +289,7 @@ impl Assembler {
     }
 
     fn string(&mut self, message: &str) -> Result<String, Exception> {
-        if let Err(exception) = self.consume(&TokenType::String, message) {
-            return Err(exception);
-        }
+        self.consume(&TokenType::String, message)?;
 
         let lexeme = match self.previous_lexeme() {
             Ok(lexeme) => lexeme,
@@ -334,9 +328,7 @@ impl Assembler {
     }
 
     fn label(&mut self) -> Result<(), Exception> {
-        if let Err(exception) = self.consume(&TokenType::Label, "Expected label name.") {
-            return Err(exception);
-        }
+        self.consume(&TokenType::Label, "Expected label name.")?;
 
         let label_name = match self.previous_lexeme() {
             Ok(name) => name,
@@ -1080,15 +1072,9 @@ impl Assembler {
                     _ => self.error_at_current("Unexpected keyword."),
                 };
 
-                if let Err(exception) = result {
-                    return Err(exception);
-                }
+                result?;
             } else {
-                if let Err(exception) =
-                    self.error_at_current("Unexpected end of input. Expected more tokens.")
-                {
-                    return Err(exception);
-                }
+                self.error_at_current("Unexpected end of input. Expected more tokens.")?;
             }
         }
 
@@ -1099,9 +1085,7 @@ impl Assembler {
             )));
         }
 
-        if let Err(exception) = self.backpatch_labels() {
-            return Err(exception);
-        }
+        self.backpatch_labels()?;
 
         if let Some((_, unresolved_label)) = self.unresolved_labels.iter().next() {
             let token = unresolved_label.token.clone();
@@ -1123,13 +1107,11 @@ impl Assembler {
         let text_segment_size: u32 = match self.text_segment.len().try_into() {
             Ok(size) => size,
             Err(_) => {
-                if let Err(exception) = self.error_at_current(&format!(
+                self.error_at_current(&format!(
                     "Failed to convert text segment size to u32. Text segment size exceeds {}. Found text segment size: {}",
                     u32::MAX,
                     self.text_segment.len()
-                )) {
-                    return Err(exception);
-                }
+                ))?;
 
                 return Err(Exception::Assembler(BaseException::new(
                     "Assembly failed due to errors.".to_string(),

@@ -25,46 +25,36 @@ impl OpenAIClient {
     ) -> Result<OpenAIChatCompletionResponse, Exception> {
         let url = format!("{}/{}", BASE_URL, CHAT_COMPLETION_ENDPOINT);
         let body = json::to_string(&request);
-        let response = match post(&url).with_body(body).send() {
-            Ok(response) => response,
-            Err(error) => {
-                return Err(Exception::OpenAIChatCompletion(BaseException::new(
-                    "Failed to send chat request.".to_string(),
-                    Some(Box::new(error.into())),
-                )));
-            }
-        };
+        let response = post(&url).with_body(body).send().map_err(|e| {
+            Exception::OpenAIChatCompletion(BaseException::new(
+                "Failed to send chat request.".to_string(),
+                Some(Box::new(e.into())),
+            ))
+        })?;
 
         if response.status_code != 200 {
             return Err(Exception::OpenAIChatCompletion(BaseException::new(
                 format!(
-                    "Chat request failed with status code: {}. {}",
+                    "Chat request failed with status {}: {}",
                     response.status_code, response.reason_phrase
                 ),
                 None,
             )));
         }
 
-        let text = match response.as_str() {
-            Ok(text) => text,
-            Err(error) => {
-                return Err(Exception::OpenAIChatCompletion(BaseException::new(
-                    format!("Failed to read chat response text. Error: {}", error),
-                    Some(Box::new(error.into())),
-                )));
-            }
-        };
+        let text = response.as_str().map_err(|e| {
+            Exception::OpenAIChatCompletion(BaseException::new(
+                format!("Failed to read chat response: {}", e),
+                Some(Box::new(e.into())),
+            ))
+        })?;
 
-        match from_str::<OpenAIChatCompletionResponse>(text) {
-            Ok(parsed_response) => Ok(parsed_response),
-            Err(error) => Err(Exception::OpenAIChatCompletion(BaseException::new(
-                format!(
-                    "Failed to deserialise chat response JSON. Response Text: {}",
-                    text
-                ),
-                Some(Box::new(error.into())),
-            ))),
-        }
+        from_str::<OpenAIChatCompletionResponse>(text).map_err(|e| {
+            Exception::OpenAIChatCompletion(BaseException::new(
+                format!("Failed to deserialise chat response: {}", text),
+                Some(Box::new(e.into())),
+            ))
+        })
     }
 
     pub fn embeddings(
@@ -72,46 +62,35 @@ impl OpenAIClient {
     ) -> Result<OpenAIEmbeddingsResponse, Exception> {
         let url = format!("{}/{}", BASE_URL, EMBEDDINGS_ENDPOINT);
         let body = json::to_string(&request);
-        let result = post(&url).with_body(body).send();
-        let response = match result {
-            Ok(response) => response,
-            Err(error) => {
-                return Err(Exception::OpenAIEmbeddings(BaseException::new(
-                    "Failed to send embedding request.".to_string(),
-                    Some(Box::new(error.into())),
-                )));
-            }
-        };
+        let response = post(&url).with_body(body).send().map_err(|e| {
+            Exception::OpenAIEmbeddings(BaseException::new(
+                "Failed to send embedding request.".to_string(),
+                Some(Box::new(e.into())),
+            ))
+        })?;
 
         if response.status_code != 200 {
             return Err(Exception::OpenAIEmbeddings(BaseException::new(
                 format!(
-                    "Embedding request failed with status code: {}.",
-                    response.status_code,
+                    "Embedding request failed with status {}.",
+                    response.status_code
                 ),
                 None,
             )));
         }
 
-        let text = match response.as_str() {
-            Ok(text) => text,
-            Err(error) => {
-                return Err(Exception::OpenAIEmbeddings(BaseException::new(
-                    format!("Failed to read embedding response text. Error: {}", error),
-                    Some(Box::new(error.into())),
-                )));
-            }
-        };
+        let text = response.as_str().map_err(|e| {
+            Exception::OpenAIEmbeddings(BaseException::new(
+                format!("Failed to read embedding response: {}", e),
+                Some(Box::new(e.into())),
+            ))
+        })?;
 
-        match from_str::<OpenAIEmbeddingsResponse>(text) {
-            Ok(parsed_response) => Ok(parsed_response),
-            Err(error) => Err(Exception::OpenAIEmbeddings(BaseException::new(
-                format!(
-                    "Failed to deserialise embedding response JSON. Response Text: {}",
-                    text
-                ),
-                Some(Box::new(error.into())),
-            ))),
-        }
+        from_str::<OpenAIEmbeddingsResponse>(text).map_err(|e| {
+            Exception::OpenAIEmbeddings(BaseException::new(
+                format!("Failed to deserialise embedding response: {}", text),
+                Some(Box::new(e.into())),
+            ))
+        })
     }
 }

@@ -40,42 +40,34 @@ pub enum OpCode {
 impl TryFrom<u32> for OpCode {
     type Error = String;
 
-    fn try_from(value: u32) -> Result<Self, <OpCode as TryFrom<u32>>::Error> {
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
-            // Data movement.
-            x if x == OpCode::LoadString as u32 => Ok(OpCode::LoadString),
-            x if x == OpCode::LoadFile as u32 => Ok(OpCode::LoadFile),
-            x if x == OpCode::LoadImmediate as u32 => Ok(OpCode::LoadImmediate),
-            x if x == OpCode::Move as u32 => Ok(OpCode::Move),
-            // Control flow.
-            x if x == OpCode::BranchEqual as u32 => Ok(OpCode::BranchEqual),
-            x if x == OpCode::BranchLessEqual as u32 => Ok(OpCode::BranchLessEqual),
-            x if x == OpCode::BranchLess as u32 => Ok(OpCode::BranchLess),
-            x if x == OpCode::BranchGreaterEqual as u32 => Ok(OpCode::BranchGreaterEqual),
-            x if x == OpCode::BranchGreater as u32 => Ok(OpCode::BranchGreater),
-            x if x == OpCode::Exit as u32 => Ok(OpCode::Exit),
-            // I/O.
-            x if x == OpCode::Out as u32 => Ok(OpCode::Out),
-            // Generative operations.
-            x if x == OpCode::Morph as u32 => Ok(OpCode::Morph),
-            x if x == OpCode::Project as u32 => Ok(OpCode::Project),
-            // Cognitive operations.
-            x if x == OpCode::Distill as u32 => Ok(OpCode::Distill),
-            x if x == OpCode::Correlate as u32 => Ok(OpCode::Correlate),
-            // Guardrails operations.
-            x if x == OpCode::Audit as u32 => Ok(OpCode::Audit),
-            x if x == OpCode::Similarity as u32 => Ok(OpCode::Similarity),
-            // Context operations.
-            x if x == OpCode::ContextClear as u32 => Ok(OpCode::ContextClear),
-            x if x == OpCode::ContextSnapshot as u32 => Ok(OpCode::ContextSnapshot),
-            x if x == OpCode::ContextRestore as u32 => Ok(OpCode::ContextRestore),
-            x if x == OpCode::ContextPush as u32 => Ok(OpCode::ContextPush),
-            x if x == OpCode::ContextPop as u32 => Ok(OpCode::ContextPop),
-            x if x == OpCode::ContextDrop as u32 => Ok(OpCode::ContextDrop),
-            x if x == OpCode::ContextSetRole as u32 => Ok(OpCode::ContextSetRole),
-            // Misc.
-            x if x == OpCode::Decrement as u32 => Ok(OpCode::Decrement),
-            _ => Err("Byte value does not correspond to any known opcode.".to_string()),
+            0x00 => Ok(OpCode::LoadString),
+            0x01 => Ok(OpCode::LoadFile),
+            0x02 => Ok(OpCode::LoadImmediate),
+            0x03 => Ok(OpCode::Move),
+            0x04 => Ok(OpCode::BranchEqual),
+            0x05 => Ok(OpCode::BranchLessEqual),
+            0x06 => Ok(OpCode::BranchLess),
+            0x07 => Ok(OpCode::BranchGreaterEqual),
+            0x08 => Ok(OpCode::BranchGreater),
+            0x09 => Ok(OpCode::Exit),
+            0x0A => Ok(OpCode::Out),
+            0x0B => Ok(OpCode::Morph),
+            0x0C => Ok(OpCode::Project),
+            0x0D => Ok(OpCode::Distill),
+            0x0E => Ok(OpCode::Correlate),
+            0x0F => Ok(OpCode::Audit),
+            0x10 => Ok(OpCode::Similarity),
+            0x11 => Ok(OpCode::ContextClear),
+            0x12 => Ok(OpCode::ContextSnapshot),
+            0x13 => Ok(OpCode::ContextRestore),
+            0x14 => Ok(OpCode::ContextPush),
+            0x15 => Ok(OpCode::ContextPop),
+            0x16 => Ok(OpCode::ContextDrop),
+            0x17 => Ok(OpCode::ContextSetRole),
+            0x18 => Ok(OpCode::Decrement),
+            _ => Err(format!("Unknown opcode value: 0x{:02X}", value)),
         }
     }
 }

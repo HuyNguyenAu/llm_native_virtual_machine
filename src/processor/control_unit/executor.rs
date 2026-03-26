@@ -24,17 +24,7 @@ pub struct Executor;
 
 impl Executor {
     fn read_text(registers: &Registers, register_number: u32) -> Result<&String, Exception> {
-        let value = match registers.get_register(register_number) {
-            Ok(value) => value,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read text from register.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-
-        match value {
+        match registers.get_register(register_number)? {
             Value::Text(text) => Ok(text),
             Value::None => Err(Exception::Executor(BaseException::new(
                 format!(
@@ -43,10 +33,10 @@ impl Executor {
                 ),
                 None,
             ))),
-            _ => Err(Exception::Executor(BaseException::new(
+            other => Err(Exception::Executor(BaseException::new(
                 format!(
                     "Register r{} contains {:?}, expected text.",
-                    register_number, value
+                    register_number, other
                 ),
                 None,
             ))),
@@ -54,17 +44,7 @@ impl Executor {
     }
 
     fn read_number(registers: &Registers, register_number: u32) -> Result<u32, Exception> {
-        let value = match registers.get_register(register_number) {
-            Ok(value) => value,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read number from register.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-
-        match value {
+        match registers.get_register(register_number)? {
             Value::Number(number) => Ok(*number),
             Value::None => Err(Exception::Executor(BaseException::new(
                 format!(
@@ -73,10 +53,10 @@ impl Executor {
                 ),
                 None,
             ))),
-            _ => Err(Exception::Executor(BaseException::new(
+            other => Err(Exception::Executor(BaseException::new(
                 format!(
                     "Register r{} contains {:?}, expected number.",
-                    register_number, value
+                    register_number, other
                 ),
                 None,
             ))),
@@ -89,16 +69,7 @@ impl Executor {
         debug: bool,
     ) -> Result<(), Exception> {
         let value = Value::Text(instruction.value.clone());
-
-        match registers.set_register(instruction.destination_register, &value) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to set destination register for load string instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        }
+        registers.set_register(instruction.destination_register, &value)?;
 
         crate::debug_print!(
             debug,
@@ -116,17 +87,7 @@ impl Executor {
         debug: bool,
     ) -> Result<(), Exception> {
         let value = Value::Number(instruction.value);
-
-        match registers.set_register(instruction.destination_register, &value) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to set destination register for load immediate instruction."
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        }
+        registers.set_register(instruction.destination_register, &value)?;
 
         crate::debug_print!(
             debug,
@@ -143,28 +104,17 @@ impl Executor {
         instruction: &LoadFileInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let file_contents = match read_to_string(&instruction.file_path) {
-            Ok(contents) => contents,
-            Err(error) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read file for load file instruction.".to_string(),
-                    Some(Box::new(error.into())),
-                )));
-            }
-        };
+        let file_contents = read_to_string(&instruction.file_path).map_err(|e| {
+            Exception::Executor(BaseException::new(
+                format!("Failed to read file '{}'", instruction.file_path),
+                Some(Box::new(e.into())),
+            ))
+        })?;
 
-        match registers.set_register(
+        registers.set_register(
             instruction.destination_register,
             &Value::Text(file_contents.clone()),
-        ) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to set destination register for load file instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        }
+        )?;
 
         crate::debug_print!(
             debug,
@@ -181,25 +131,8 @@ impl Executor {
         instruction: &MoveInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match registers.get_register(instruction.source_register) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read source register for move instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-
-        match registers.set_register(instruction.destination_register, &value) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to set destination register for move instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        }
+        let value = registers.get_register(instruction.source_register)?.clone();
+        registers.set_register(instruction.destination_register, &value)?;
 
         crate::debug_print!(
             debug,
@@ -216,26 +149,8 @@ impl Executor {
         instruction: &BranchInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value_a = match Self::read_number(registers, instruction.source_register_1) {
-            Ok(value) => value,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read number from source register 1 for branch instruction."
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-        let value_b = match Self::read_number(registers, instruction.source_register_2) {
-            Ok(value) => value,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read number from source register 2 for branch instruction."
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value_a = Self::read_number(registers, instruction.source_register_1)?;
+        let value_b = Self::read_number(registers, instruction.source_register_2)?;
 
         let is_true = match instruction.branch_type {
             BranchType::Equal => value_a == value_b,
@@ -246,17 +161,13 @@ impl Executor {
         };
 
         if is_true {
-            let pointer = match usize::try_from(instruction.instruction_pointer_jump_index) {
-                Ok(index) => index,
-                Err(error) => {
-                    return Err(Exception::Executor(BaseException::new(
-                        "Failed to convert instruction pointer jump index to usize for branch instruction."
-                            .to_string(),
-                        Some(Box::new(error.to_string().into())),
-                    )));
-                }
-            };
-
+            let pointer =
+                usize::try_from(instruction.instruction_pointer_jump_index).map_err(|e| {
+                    Exception::Executor(BaseException::new(
+                        "Invalid branch jump index".to_string(),
+                        Some(Box::new(e.to_string().into())),
+                    ))
+                })?;
             registers.set_instruction_pointer(pointer);
         }
 
@@ -289,15 +200,7 @@ impl Executor {
         instruction: &OutputInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match registers.get_register(instruction.source_register) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read source register for output instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value = registers.get_register(instruction.source_register)?.clone();
 
         crate::debug_print!(
             debug,
@@ -319,30 +222,13 @@ impl Executor {
         text_model: &str,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match Self::read_text(registers, instruction.source_register) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read text from source register for morph instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value = Self::read_text(registers, instruction.source_register)?.clone();
         let micro_prompt = format!(
             "Rewrite to exactly match this template:\n{}\n\nAnswer only:",
             value
         );
         let context = registers.get_context();
-
-        let result = match LanguageLogicUnit::string(&micro_prompt, context, text_model) {
-            Ok(result) => result,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to perform morph operation.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let result = LanguageLogicUnit::string(&micro_prompt, context, text_model)?;
 
         crate::debug_print!(
             debug,
@@ -351,13 +237,7 @@ impl Executor {
             result
         );
 
-        match registers.set_register(instruction.destination_register, &Value::Text(result)) {
-            Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::Executor(BaseException::new(
-                "Failed to set destination register for morph instruction.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        registers.set_register(instruction.destination_register, &Value::Text(result))
     }
 
     fn project(
@@ -366,27 +246,10 @@ impl Executor {
         text_model: &str,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match Self::read_text(registers, instruction.source_register) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read text from source register for project instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value = Self::read_text(registers, instruction.source_register)?.clone();
         let micro_prompt = format!("What happens next if:\n{}\n\nPrediction only:", value);
         let context = registers.get_context();
-
-        let result = match LanguageLogicUnit::string(&micro_prompt, context, text_model) {
-            Ok(result) => result,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to perform project operation.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let result = LanguageLogicUnit::string(&micro_prompt, context, text_model)?;
 
         crate::debug_print!(
             debug,
@@ -395,13 +258,7 @@ impl Executor {
             result
         );
 
-        match registers.set_register(instruction.destination_register, &Value::Text(result)) {
-            Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::Executor(BaseException::new(
-                "Failed to set destination register for project instruction.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        registers.set_register(instruction.destination_register, &Value::Text(result))
     }
 
     fn distill(
@@ -410,30 +267,13 @@ impl Executor {
         text_model: &str,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match Self::read_text(registers, instruction.source_register) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read text from source register for distill instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value = Self::read_text(registers, instruction.source_register)?.clone();
         let micro_prompt = format!(
             "Extract only the exact information here:\n{}\n\nShort answer only:",
             value
         );
         let context = registers.get_context();
-
-        let result = match LanguageLogicUnit::string(&micro_prompt, context, text_model) {
-            Ok(result) => result,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to perform distill operation.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let result = LanguageLogicUnit::string(&micro_prompt, context, text_model)?;
 
         crate::debug_print!(
             debug,
@@ -442,13 +282,7 @@ impl Executor {
             result
         );
 
-        match registers.set_register(instruction.destination_register, &Value::Text(result)) {
-            Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::Executor(BaseException::new(
-                "Failed to set destination register for distill instruction.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        registers.set_register(instruction.destination_register, &Value::Text(result))
     }
 
     fn correlate(
@@ -457,31 +291,13 @@ impl Executor {
         text_model: &str,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match Self::read_text(registers, instruction.source_register) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read text from source register for correlate instruction."
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value = Self::read_text(registers, instruction.source_register)?.clone();
         let micro_prompt = format!(
             "Compare with:\n{}\nHow are they similar or different?\n\nAnswer only:",
             value
         );
         let context = registers.get_context();
-
-        let result = match LanguageLogicUnit::string(&micro_prompt, context, text_model) {
-            Ok(result) => result,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to perform correlate operation.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let result = LanguageLogicUnit::string(&micro_prompt, context, text_model)?;
 
         crate::debug_print!(
             debug,
@@ -490,13 +306,7 @@ impl Executor {
             result
         );
 
-        match registers.set_register(instruction.destination_register, &Value::Text(result)) {
-            Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::Executor(BaseException::new(
-                "Failed to set destination register for correlate instruction.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        registers.set_register(instruction.destination_register, &Value::Text(result))
     }
 
     fn audit(
@@ -506,15 +316,7 @@ impl Executor {
         embedding_model: &str,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match Self::read_text(registers, instruction.source_register) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read text from source register for audit instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value = Self::read_text(registers, instruction.source_register)?.clone();
         let micro_prompt = format!(
             "Does the it follow the rule:\n{}\nAnswer with exactly one word: YES or NO.\n\nAnswer only:",
             value
@@ -523,22 +325,14 @@ impl Executor {
         let false_values = vec!["NO"];
         let context = registers.get_context();
 
-        let result = match LanguageLogicUnit::boolean(
+        let result = LanguageLogicUnit::boolean(
             &micro_prompt,
             &true_values,
             &false_values,
             context,
             text_model,
             embedding_model,
-        ) {
-            Ok(result) => result,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to perform audit operation.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        )?;
 
         crate::debug_print!(
             debug,
@@ -547,13 +341,7 @@ impl Executor {
             result
         );
 
-        match registers.set_register(instruction.destination_register, &Value::Number(result)) {
-            Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::Executor(BaseException::new(
-                "Failed to set destination register for audit instruction.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        registers.set_register(instruction.destination_register, &Value::Number(result))
     }
 
     fn similarity(
@@ -562,37 +350,10 @@ impl Executor {
         embedding_model: &str,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value_a = match Self::read_text(registers, instruction.source_register_1) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read text from source register 1 for similarity instruction."
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-        let value_b = match Self::read_text(registers, instruction.source_register_2) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read text from source register 2 for similarity instruction."
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value_a = Self::read_text(registers, instruction.source_register_1)?.clone();
+        let value_b = Self::read_text(registers, instruction.source_register_2)?.clone();
 
-        let result = match LanguageLogicUnit::cosine_similarity(&value_a, &value_b, embedding_model)
-        {
-            Ok(result) => result,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to perform similarity operation.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let result = LanguageLogicUnit::cosine_similarity(&value_a, &value_b, embedding_model)?;
 
         crate::debug_print!(
             debug,
@@ -603,13 +364,7 @@ impl Executor {
             result
         );
 
-        match registers.set_register(instruction.destination_register, &Value::Number(result)) {
-            Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::Executor(BaseException::new(
-                "Failed to set destination register for similarity instruction.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        registers.set_register(instruction.destination_register, &Value::Number(result))
     }
 
     fn context_clear(registers: &mut Registers, debug: bool) {
@@ -624,17 +379,7 @@ impl Executor {
         debug: bool,
     ) -> Result<(), Exception> {
         let snapshot = registers.snapshot_context();
-
-        match registers.set_register(instruction.destination_register, &Value::Text(snapshot)) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to set destination register for context snapshot instruction."
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        }
+        registers.set_register(instruction.destination_register, &Value::Text(snapshot))?;
 
         crate::debug_print!(
             debug,
@@ -650,25 +395,8 @@ impl Executor {
         instruction: &ContextRestoreInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let snapshot = match Self::read_text(registers, instruction.source_register) {
-            Ok(value) => value.clone(),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read source register for context restore instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-
-        match registers.restore_context(&snapshot) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to restore context from snapshot.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        }
+        let snapshot = Self::read_text(registers, instruction.source_register)?.clone();
+        registers.restore_context(&snapshot)?;
 
         crate::debug_print!(
             debug,
@@ -684,10 +412,10 @@ impl Executor {
         instruction: &ContextPushInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match registers.get_register(instruction.source_register) {
-            Ok(Value::Text(text)) => text.clone(),
-            Ok(Value::Number(number)) => number.to_string(),
-            Ok(Value::None) => {
+        let value = match registers.get_register(instruction.source_register)? {
+            Value::Text(text) => text.clone(),
+            Value::Number(number) => number.to_string(),
+            Value::None => {
                 return Err(Exception::Executor(BaseException::new(
                     format!(
                         "Register r{} is uninitialised, expected text or number.",
@@ -696,20 +424,10 @@ impl Executor {
                     None,
                 )));
             }
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    format!(
-                        "Failed to read register r{} for context push instruction.",
-                        instruction.source_register
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
         };
         let role = registers
             .get_context_role()
-            .unwrap_or(roles::USER_ROLE.to_string())
-            .to_string();
+            .unwrap_or(roles::USER_ROLE.to_string());
 
         registers.push_context(ContextMessage::new(&role, &value));
 
@@ -732,28 +450,17 @@ impl Executor {
         instruction: &ContextPopInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let context = match registers.pop_context() {
-            Some(ctx) => ctx,
-            None => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to pop context because context stack is uninitialised.".to_string(),
-                    None,
-                )));
-            }
-        };
+        let context = registers.pop_context().ok_or_else(|| {
+            Exception::Executor(BaseException::new(
+                "Cannot pop from empty context stack.".to_string(),
+                None,
+            ))
+        })?;
 
-        match registers.set_register(
+        registers.set_register(
             instruction.destination_register,
             &Value::Text(context.content.clone()),
-        ) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to set register for CONTEXT_POP instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        }
+        )?;
 
         crate::debug_print!(debug, "Executed POP : Popped value from context stack.",);
 
@@ -761,15 +468,12 @@ impl Executor {
     }
 
     fn context_drop(registers: &mut Registers, debug: bool) -> Result<(), Exception> {
-        match registers.pop_context() {
-            Some(_) => (),
-            None => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to pop context because context stack is uninitialised.".to_string(),
-                    None,
-                )));
-            }
-        }
+        registers.pop_context().ok_or_else(|| {
+            Exception::Executor(BaseException::new(
+                "Cannot drop from empty context stack.".to_string(),
+                None,
+            ))
+        })?;
 
         crate::debug_print!(debug, "Executed DRP : Dropped value from context stack.",);
 
@@ -795,15 +499,7 @@ impl Executor {
         instruction: &DecrementInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = match Self::read_number(registers, instruction.source_register) {
-            Ok(value) => value,
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to read number from register for decrement instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value = Self::read_number(registers, instruction.source_register)?;
 
         if value < instruction.value {
             return Err(Exception::Executor(BaseException::new(
@@ -816,16 +512,7 @@ impl Executor {
         }
 
         let new_value = Value::Number(value - instruction.value);
-
-        match registers.set_register(instruction.source_register, &new_value) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Executor(BaseException::new(
-                    "Failed to set register for decrement instruction.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        }
+        registers.set_register(instruction.source_register, &new_value)?;
 
         crate::debug_print!(
             debug,

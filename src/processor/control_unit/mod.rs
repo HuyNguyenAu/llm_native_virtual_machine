@@ -25,74 +25,50 @@ impl ControlUnit {
     }
 
     fn read_instruction(&self) -> Result<[[u8; 4]; 4], Exception> {
-        let instruction_pointer = self.registers.get_instruction_pointer();
+        let ip = self.registers.get_instruction_pointer();
         let mut buffer = [[0u8; 4]; 4];
 
         for (i, slot) in buffer.iter_mut().enumerate() {
-            *slot = match self.memory.read(instruction_pointer + i) {
-                Ok(bytes) => *bytes,
-                Err(exception) => {
-                    return Err(Exception::ControlUnit(BaseException::new(
-                        format!(
-                            "Failed to read instruction at {}: no data found",
-                            instruction_pointer + i
-                        ),
-                        Some(Box::new(exception)),
-                    )));
-                }
-            }
+            *slot = *self.memory.read(ip + i).map_err(|e| {
+                Exception::ControlUnit(BaseException::new(
+                    format!("Failed to read instruction at {}", ip + i),
+                    Some(Box::new(e)),
+                ))
+            })?;
         }
 
         Ok(buffer)
     }
 
     fn header_pointer(&self, index: usize, byte_code: &[[u8; 4]]) -> Result<usize, Exception> {
-        let pointer_bytes = match byte_code.get(index) {
-            Some(bytes) => bytes,
-            None => {
-                return Err(Exception::ControlUnit(BaseException::new(
-                    format!(
-                        "Failed to read header pointer at index {}: no data found",
-                        index
-                    ),
-                    None,
-                )));
-            }
-        };
+        let pointer_bytes = byte_code.get(index).ok_or_else(|| {
+            Exception::ControlUnit(BaseException::new(
+                format!("Header pointer at index {} not found", index),
+                None,
+            ))
+        })?;
 
-        match u32::from_be_bytes(*pointer_bytes).try_into() {
-            Ok(pointer) => Ok(pointer),
-            Err(error) => Err(Exception::ControlUnit(BaseException::new(
-                format!(
-                    "Failed to read header pointer at index {}: invalid pointer value",
-                    index
-                ),
-                Some(Box::new(error.to_string().into())),
-            ))),
-        }
+        u32::from_be_bytes(*pointer_bytes).try_into().map_err(|e| {
+            Exception::ControlUnit(BaseException::new(
+                format!("Invalid header pointer value at index {}", index),
+                Some(Box::new(format!("{}", e).into())),
+            ))
+        })
     }
 
     pub fn load(&mut self, byte_code: &[[u8; 4]]) -> Result<(), Exception> {
-        let instruction_section_pointer = match self.header_pointer(0, byte_code) {
-            Ok(pointer) => pointer,
-            Err(exception) => {
-                return Err(Exception::ControlUnit(BaseException::new(
-                    "Control Unit failed to load byte code: invalid instruction section pointer"
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-        let data_section_pointer = match self.header_pointer(1, byte_code) {
-            Ok(pointer) => pointer,
-            Err(exception) => {
-                return Err(Exception::ControlUnit(BaseException::new(
-                    "Control Unit failed to load byte code: invalid data section pointer"
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let instruction_section_pointer = self.header_pointer(0, byte_code).map_err(|e| {
+            Exception::ControlUnit(BaseException::new(
+                "Invalid instruction section pointer".to_string(),
+                Some(Box::new(e)),
+            ))
+        })?;
+        let data_section_pointer = self.header_pointer(1, byte_code).map_err(|e| {
+            Exception::ControlUnit(BaseException::new(
+                "Invalid data section pointer".to_string(),
+                Some(Box::new(e)),
+            ))
+        })?;
 
         self.memory.load(byte_code);
 
@@ -110,16 +86,12 @@ impl ControlUnit {
             return Ok(false);
         }
 
-        let instruction_bytes = match self.read_instruction() {
-            Ok(bytes) => bytes,
-            Err(exception) => {
-                return Err(Exception::ControlUnit(BaseException::new(
-                    "Control Unit failed to fetch instruction: unable to read instruction bytes"
-                        .to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let instruction_bytes = self.read_instruction().map_err(|e| {
+            Exception::ControlUnit(BaseException::new(
+                "Failed to fetch instruction".to_string(),
+                Some(Box::new(e)),
+            ))
+        })?;
 
         self.registers.set_instruction(Some(instruction_bytes));
         self.registers.advance_instruction_pointer(4);
@@ -128,24 +100,19 @@ impl ControlUnit {
     }
 
     pub fn decode(&self) -> Result<Instruction, Exception> {
-        let bytes = match self.registers.get_instruction() {
-            Some(bytes) => bytes,
-            None => {
-                return Err(Exception::ControlUnit(BaseException::new(
-                    "Control Unit failed to decode instruction: no instruction bytes found"
-                        .to_string(),
-                    None,
-                )));
-            }
-        };
+        let bytes = self.registers.get_instruction().ok_or_else(|| {
+            Exception::ControlUnit(BaseException::new(
+                "No instruction bytes to decode".to_string(),
+                None,
+            ))
+        })?;
 
-        match Decoder::decode(&self.memory, &self.registers, bytes) {
-            Ok(instruction) => Ok(instruction),
-            Err(exception) => Err(Exception::ControlUnit(BaseException::new(
-                "Control Unit failed to decode instruction.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        Decoder::decode(&self.memory, &self.registers, bytes).map_err(|e| {
+            Exception::ControlUnit(BaseException::new(
+                "Failed to decode instruction".to_string(),
+                Some(Box::new(e)),
+            ))
+        })
     }
 
     pub fn execute(
@@ -155,19 +122,19 @@ impl ControlUnit {
         embedding_model: &str,
         debug: bool,
     ) -> Result<(), Exception> {
-        match Executor::execute(
+        Executor::execute(
             &mut self.memory,
             &mut self.registers,
             &instruction,
             text_model,
             embedding_model,
             debug,
-        ) {
-            Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::ControlUnit(BaseException::new(
-                "Control Unit failed to execute instruction.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        )
+        .map_err(|e| {
+            Exception::ControlUnit(BaseException::new(
+                "Failed to execute instruction".to_string(),
+                Some(Box::new(e)),
+            ))
+        })
     }
 }

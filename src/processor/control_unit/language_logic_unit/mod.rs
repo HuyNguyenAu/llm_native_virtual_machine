@@ -197,105 +197,35 @@ impl LanguageLogicUnit {
         }))
         .collect::<Vec<OpenAIChatCompletionRequestText>>();
 
-        let messages = match Self::merge_messages_by_role(&messages) {
-            Ok(merged_messages) => merged_messages,
-            Err(exception) => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "Failed to execute chat completion.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let messages = Self::merge_messages_by_role(&messages)?;
+        Self::validate_messages(&messages)?;
 
-        match Self::validate_messages(&messages) {
-            Ok(_) => {}
-            Err(exception) => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "Failed to execute chat completion.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let request = OpenAIChatCompletionRequest::new(messages, model);
+        let response = OpenAIClient::chat_completion(request)?;
 
-        let request = OpenAIChatCompletionRequest {
-            messages,
-            stream: model.stream,
-            return_progress: model.return_progress,
-            model: model.model.clone(),
-            reasoning_format: model.reasoning_format.clone(),
-            temperature: model.temperature,
-            max_tokens: model.max_tokens,
-            dynatemp_range: model.dynatemp_range,
-            dynatemp_exponent: model.dynatemp_exponent,
-            top_k: model.top_k,
-            top_p: model.top_p,
-            min_p: model.min_p,
-            xtc_probability: model.xtc_probability,
-            xtc_threshold: model.xtc_threshold,
-            typ_p: model.typ_p,
-            repeat_last_n: model.repeat_last_n,
-            repeat_penalty: model.repeat_penalty,
-            presence_penalty: model.presence_penalty,
-            frequency_penalty: model.frequency_penalty,
-            dry_multiplier: model.dry_multiplier,
-            dry_base: model.dry_base,
-            dry_allowed_length: model.dry_allowed_length,
-            dry_penalty_last_n: model.dry_penalty_last_n,
-            samplers: model.samplers.to_vec(),
-            timings_per_token: model.timings_per_token,
-        };
-        let response = match OpenAIClient::chat_completion(request) {
-            Ok(response) => response,
-            Err(exception) => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "Failed to execute chat completion.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let choice = response.choices.first().ok_or_else(|| {
+            Exception::LanguageLogic(BaseException::new(
+                "No choices returned from chat completion.".to_string(),
+                None,
+            ))
+        })?;
 
-        let choice = match response.choices.first() {
-            Some(choice) => choice,
-            None => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "No choices returned from client.".to_string(),
-                    None,
-                )));
-            }
-        };
-        let result = Self::clean_string(&choice.message.content);
-
-        Ok(result)
+        Ok(Self::clean_string(&choice.message.content))
     }
 
     fn embeddings(content: &str, embedding_model: &str) -> Result<Vec<f32>, Exception> {
         let model = Self::default_embeddings_model(embedding_model);
-        let request = OpenAIEmbeddingsRequest {
-            model: model.model.to_string(),
-            input: content.to_string(),
-            encoding_format: model.encoding_format.to_string(),
-        };
-        let response = match OpenAIClient::embeddings(request) {
-            Ok(response) => response,
-            Err(exception) => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "Failed to get embeddings response from client.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let request = OpenAIEmbeddingsRequest::new(content, model);
+        let response = OpenAIClient::embeddings(request)?;
 
-        let embeddings = match response.data.first() {
-            Some(embedding) => embedding,
-            None => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "No embeddings returned from client.".to_string(),
-                    None,
-                )));
-            }
-        };
+        let embedding = response.data.first().ok_or_else(|| {
+            Exception::LanguageLogic(BaseException::new(
+                "No embeddings returned from client.".to_string(),
+                None,
+            ))
+        })?;
 
-        Ok(embeddings.embedding.to_owned())
+        Ok(embedding.embedding.to_owned())
     }
 
     pub fn cosine_similarity(
@@ -303,24 +233,8 @@ impl LanguageLogicUnit {
         value_b: &str,
         embedding_model: &str,
     ) -> Result<u32, Exception> {
-        let value_a_embeddings = match Self::embeddings(value_a, embedding_model) {
-            Ok(embeddings) => embeddings,
-            Err(exception) => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    format!("Failed to get embedding for value a \"{}\".", value_a),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-        let value_b_embeddings = match Self::embeddings(value_b, embedding_model) {
-            Ok(embeddings) => embeddings,
-            Err(exception) => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    format!("Failed to get embedding for value b \"{}\".", value_b),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value_a_embeddings = Self::embeddings(value_a, embedding_model)?;
+        let value_b_embeddings = Self::embeddings(value_b, embedding_model)?;
 
         // Compute cosine similarity.
         let dot_product: f32 = value_a_embeddings
@@ -341,17 +255,7 @@ impl LanguageLogicUnit {
         context: &[ContextMessage],
         text_model: &str,
     ) -> Result<String, Exception> {
-        let result = match Self::chat(micro_prompt, context, text_model) {
-            Ok(result) => result,
-            Err(exception) => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "Failed to execute string operation.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
-
-        Ok(result)
+        Self::chat(micro_prompt, context, text_model)
     }
 
     pub fn boolean(
@@ -362,65 +266,32 @@ impl LanguageLogicUnit {
         text_model: &str,
         embedding_model: &str,
     ) -> Result<u32, Exception> {
-        let value = match Self::string(micro_prompt, context, text_model) {
-            Ok(value) => value,
-            Err(exception) => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "Failed to execute boolean operation.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let value = Self::string(micro_prompt, context, text_model)?;
 
-        let mut true_scores = Vec::<u32>::new();
+        let max_true_score = true_values
+            .iter()
+            .map(|tv| {
+                Self::cosine_similarity(&value.to_lowercase(), &tv.to_lowercase(), embedding_model)
+            })
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .max()
+            .unwrap_or(0);
 
-        for true_value in true_values {
-            match Self::cosine_similarity(
-                &value.to_lowercase(),
-                &true_value.to_lowercase(),
-                embedding_model,
-            ) {
-                Ok(score) => true_scores.push(score),
-                Err(exception) => {
-                    return Err(Exception::LanguageLogic(BaseException::new(
-                        format!(
-                            "Failed to execute boolean operation for true value '{}'.",
-                            true_value
-                        ),
-                        Some(Box::new(exception)),
-                    )));
-                }
-            }
-        }
-
-        let mut false_scores = Vec::<u32>::new();
-
-        for false_value in false_values {
-            match Self::cosine_similarity(
-                &value.to_lowercase(),
-                &false_value.to_lowercase(),
-                embedding_model,
-            ) {
-                Ok(score) => false_scores.push(score),
-                Err(exception) => {
-                    return Err(Exception::LanguageLogic(BaseException::new(
-                        format!(
-                            "Failed to execute boolean operation for false value '{}'.",
-                            false_value
-                        ),
-                        Some(Box::new(exception)),
-                    )));
-                }
-            }
-        }
-
-        let max_true_score = true_scores.into_iter().max().unwrap_or(0);
-        let max_false_score = false_scores.into_iter().max().unwrap_or(0);
+        let max_false_score = false_values
+            .iter()
+            .map(|fv| {
+                Self::cosine_similarity(&value.to_lowercase(), &fv.to_lowercase(), embedding_model)
+            })
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .max()
+            .unwrap_or(0);
 
         if max_true_score > max_false_score {
-            return Ok(100);
+            Ok(100)
+        } else {
+            Ok(0)
         }
-
-        Ok(0)
     }
 }

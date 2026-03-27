@@ -240,11 +240,11 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = Self::read_text(registers, instruction.source_register)?.clone();
         let micro_prompt = format!(
-            "{}\nAnswer with exactly one word: YES or NO.\n\nAnswer only:",
+            "{}\nAnswer with exactly one word: YES or NO, TRUE or FALSE.\n\nAnswer only:",
             value
         );
-        let true_values = vec!["YES"];
-        let false_values = vec!["NO"];
+        let true_values = vec!["YES", "TRUE"];
+        let false_values = vec!["NO", "FALSE"];
         let context = registers.get_context();
 
         let result = LanguageLogicUnit::boolean(

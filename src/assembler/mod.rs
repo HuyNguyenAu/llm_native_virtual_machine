@@ -83,11 +83,13 @@ pub struct Assembler {
 
 impl Assembler {
     pub fn new(source: String) -> Self {
+        let scanner = Scanner::new(source.clone());
+
         Assembler {
             data_segment: Vec::new(),
             text_segment: Vec::new(),
-            source: source.clone(),
-            scanner: Scanner::new(source),
+            source,
+            scanner,
             previous: None,
             current: None,
             labels: HashMap::new(),

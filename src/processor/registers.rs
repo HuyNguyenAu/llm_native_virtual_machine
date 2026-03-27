@@ -58,25 +58,16 @@ impl Registers {
     }
 
     fn to_index(register_number: u32) -> Result<usize, Exception> {
-        let idx = match usize::try_from(register_number) {
-            Ok(value) => value,
-            Err(error) => {
-                return Err(Exception::Register(BaseException::new(
-                    format!(
-                        "Failed to convert register number to usize. Invalid register number: {}. Must be a non-negative integer.",
-                        register_number
-                    ),
-                    Some(Box::new(format!("{:#?}", error).into())),
-                )));
-            }
-        };
+        let idx = usize::try_from(register_number).map_err(|_| {
+            Exception::Register(BaseException::new(
+                format!("Invalid register number: {}", register_number),
+                None,
+            ))
+        })?;
 
         if !(1..=32).contains(&idx) {
             return Err(Exception::Register(BaseException::new(
-                format!(
-                    "Failed to convert register number. Invalid register number: {}. Valid register numbers are from 1 to 32.",
-                    register_number
-                ),
+                format!("Register number {} out of range (1-32).", register_number),
                 None,
             )));
         }
@@ -85,31 +76,13 @@ impl Registers {
     }
 
     pub fn get_register(&self, register_number: u32) -> Result<&Value, Exception> {
-        let idx = match Self::to_index(register_number) {
-            Ok(value) => value,
-            Err(error) => {
-                return Err(Exception::Register(BaseException::new(
-                    format!("Failed to get register: {}", error),
-                    Some(Box::new(error)),
-                )));
-            }
-        };
-
+        let idx = Self::to_index(register_number)?;
         Ok(&self.general_purpose[idx])
     }
 
     pub fn set_register(&mut self, register_number: u32, value: &Value) -> Result<(), Exception> {
-        let idx = match Self::to_index(register_number) {
-            Ok(value) => value,
-            Err(error) => {
-                return Err(Exception::Register(BaseException::new(
-                    format!("Failed to set register: {}", error),
-                    Some(Box::new(error)),
-                )));
-            }
-        };
+        let idx = Self::to_index(register_number)?;
         self.general_purpose[idx] = value.clone();
-
         Ok(())
     }
 
@@ -154,15 +127,12 @@ impl Registers {
     }
 
     pub fn restore_context(&mut self, snapshot: &str) -> Result<(), Exception> {
-        self.context = match miniserde::json::from_str(snapshot) {
-            Ok(context) => context,
-            Err(error) => {
-                return Err(Exception::Register(BaseException::new(
-                    format!("Failed to restore context from snapshot: {}", error),
-                    Some(Box::new(format!("{:#?}", error).into())),
-                )));
-            }
-        };
+        self.context = miniserde::json::from_str(snapshot).map_err(|e| {
+            Exception::Register(BaseException::new(
+                format!("Failed to restore context from snapshot: {}", e),
+                None,
+            ))
+        })?;
 
         Ok(())
     }

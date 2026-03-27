@@ -1,22 +1,10 @@
-use std::{
-    error::Error,
-    fmt::{self},
-    num::ParseIntError,
-};
+use std::{error::Error, fmt, num::ParseIntError};
 
 #[derive(Debug)]
 pub struct BaseException {
     pub location: String,
     pub message: String,
     pub inner_exception: Option<Box<Exception>>,
-}
-
-impl std::ops::Deref for BaseException {
-    type Target = String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.location
-    }
 }
 
 impl BaseException {
@@ -34,50 +22,8 @@ impl BaseException {
 
 impl From<Exception> for BaseException {
     fn from(exception: Exception) -> Self {
-        match exception {
-            Exception::BaseException(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            Exception::Program(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            Exception::Assembler(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            // OpenAI client exceptions.
-            Exception::OpenAIChatCompletion(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            Exception::OpenAIEmbeddings(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            // Language logic unit exceptions.
-            Exception::LanguageLogic(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            // Control unit exceptions.
-            Exception::ControlUnit(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            Exception::Decoder(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            Exception::Executor(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            // Processor exceptions.
-            Exception::Processor(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            // Memory exceptions.
-            Exception::Memory(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-            // Register exceptions.
-            Exception::Register(exception) => {
-                BaseException::new(exception.message, exception.inner_exception)
-            }
-        }
+        let e = exception.into_inner();
+        BaseException::new(e.message, e.inner_exception)
     }
 }
 
@@ -86,21 +32,51 @@ pub enum Exception {
     BaseException(BaseException),
     Program(BaseException),
     Assembler(BaseException),
-    // OpenAI client exceptions.
     OpenAIChatCompletion(BaseException),
     OpenAIEmbeddings(BaseException),
-    // Language logic unit exceptions.
     LanguageLogic(BaseException),
-    // Control unit exceptions.
     ControlUnit(BaseException),
     Decoder(BaseException),
     Executor(BaseException),
-    // Processor exceptions.
     Processor(BaseException),
-    // Memory exceptions.
     Memory(BaseException),
-    // Register exceptions.
     Register(BaseException),
+}
+
+impl Exception {
+    fn inner(&self) -> &BaseException {
+        match self {
+            Self::BaseException(e)
+            | Self::Program(e)
+            | Self::Assembler(e)
+            | Self::OpenAIChatCompletion(e)
+            | Self::OpenAIEmbeddings(e)
+            | Self::LanguageLogic(e)
+            | Self::ControlUnit(e)
+            | Self::Decoder(e)
+            | Self::Executor(e)
+            | Self::Processor(e)
+            | Self::Memory(e)
+            | Self::Register(e) => e,
+        }
+    }
+
+    fn into_inner(self) -> BaseException {
+        match self {
+            Self::BaseException(e)
+            | Self::Program(e)
+            | Self::Assembler(e)
+            | Self::OpenAIChatCompletion(e)
+            | Self::OpenAIEmbeddings(e)
+            | Self::LanguageLogic(e)
+            | Self::ControlUnit(e)
+            | Self::Decoder(e)
+            | Self::Executor(e)
+            | Self::Processor(e)
+            | Self::Memory(e)
+            | Self::Register(e) => e,
+        }
+    }
 }
 
 impl From<std::io::Error> for Exception {
@@ -140,7 +116,12 @@ impl From<ParseIntError> for Exception {
 }
 
 impl fmt::Display for Exception {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{:#?}", self)
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let base = self.inner();
+        write!(f, "[{}] {}", base.location, base.message)?;
+        if let Some(inner) = &base.inner_exception {
+            write!(f, "\n  Caused by: {}", inner)?;
+        }
+        Ok(())
     }
 }

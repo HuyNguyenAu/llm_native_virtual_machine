@@ -25,77 +25,64 @@ impl Processor {
         if !data.len().is_multiple_of(4) {
             return Err(Exception::Processor(BaseException::new(
                 format!(
-                    "Processor failed to load byte code. Invalid byte code length: {}. Byte code must be a multiple of 4 bytes.",
+                    "Invalid byte code length: {}. Must be a multiple of 4 bytes.",
                     data.len()
                 ),
                 None,
             )));
         }
 
-        let chunks = data.chunks(4);
-        let mut byte_code: Vec<[u8; 4]> = Vec::new();
+        let byte_code: Vec<[u8; 4]> = data
+            .chunks(4)
+            .map(|chunk| {
+                chunk.try_into().map_err(|e| {
+                    Exception::Processor(BaseException::new(
+                        "Byte code chunks must be exactly 4 bytes.".to_string(),
+                        Some(Box::new(format!("{:#?}", e).into())),
+                    ))
+                })
+            })
+            .collect::<Result<_, _>>()?;
 
-        for chunk in chunks {
-            match chunk.try_into() {
-                Ok(bytes) => byte_code.push(bytes),
-                Err(error) => {
-                    return Err(Exception::Processor(BaseException::new(
-                        "Processor failed to load byte code. Byte code chunks must be exactly 4 bytes.".to_string(),
-                        Some(Box::new(format!("{:#?}", error).into())),
-                    )));
-                }
-            }
-        }
-
-        match self.control_unit.load(&byte_code) {
-            Ok(_) => Ok(()),
-            Err(exception) => Err(Exception::Processor(BaseException::new(
-                "Processor failed to load byte code into control unit.".to_string(),
-                Some(Box::new(exception)),
-            ))),
-        }
+        self.control_unit.load(&byte_code).map_err(|e| {
+            Exception::Processor(BaseException::new(
+                "Failed to load byte code into control unit.".to_string(),
+                Some(Box::new(e)),
+            ))
+        })
     }
 
     pub fn run(&mut self) -> Result<(), Exception> {
         loop {
-            match self.control_unit.fetch() {
-                Ok(instruction_fetched) => {
-                    if !instruction_fetched {
-                        return Ok(());
-                    }
-                }
-                Err(exception) => {
-                    return Err(Exception::Processor(BaseException::new(
-                        "Processor failed to fetch instruction.".to_string(),
-                        Some(Box::new(exception)),
-                    )));
-                }
+            if !self.control_unit.fetch().map_err(|e| {
+                Exception::Processor(BaseException::new(
+                    "Failed to fetch instruction.".to_string(),
+                    Some(Box::new(e)),
+                ))
+            })? {
+                return Ok(());
             }
 
-            let instruction = match self.control_unit.decode() {
-                Ok(instruction) => instruction,
-                Err(exception) => {
-                    return Err(Exception::Processor(BaseException::new(
-                        "Processor failed to decode instruction.".to_string(),
-                        Some(Box::new(exception)),
-                    )));
-                }
-            };
+            let instruction = self.control_unit.decode().map_err(|e| {
+                Exception::Processor(BaseException::new(
+                    "Failed to decode instruction.".to_string(),
+                    Some(Box::new(e)),
+                ))
+            })?;
 
-            match self.control_unit.execute(
-                instruction,
-                &self.config.text_model,
-                &self.config.embedding_model,
-                self.config.debug_run,
-            ) {
-                Ok(_) => (),
-                Err(exception) => {
-                    return Err(Exception::Processor(BaseException::new(
-                        "Processor failed to execute instruction.".to_string(),
-                        Some(Box::new(exception)),
-                    )));
-                }
-            }
+            self.control_unit
+                .execute(
+                    instruction,
+                    &self.config.text_model,
+                    &self.config.embedding_model,
+                    self.config.debug_run,
+                )
+                .map_err(|e| {
+                    Exception::Processor(BaseException::new(
+                        "Failed to execute instruction.".to_string(),
+                        Some(Box::new(e)),
+                    ))
+                })?;
         }
     }
 }

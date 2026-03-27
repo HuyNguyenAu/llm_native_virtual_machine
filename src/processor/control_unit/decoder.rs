@@ -21,66 +21,47 @@ pub struct Decoder;
 impl Decoder {
     fn op_code(bytes: &[u8; 4]) -> Result<OpCode, Exception> {
         let value = u32::from_be_bytes(*bytes);
-
-        match OpCode::try_from(value) {
-            Ok(op_code) => Ok(op_code),
-            Err(error) => Err(Exception::Decoder(BaseException::new(
-                format!(
-                    "Failed to decode opcode from byte code. Word: 0x{:08X}",
-                    value
-                ),
-                Some(Box::new(error.to_string().into())),
-            ))),
-        }
+        OpCode::try_from(value).map_err(|e| {
+            Exception::Decoder(BaseException::new(
+                format!("Failed to decode opcode: 0x{:08X}", value),
+                Some(Box::new(e.into())),
+            ))
+        })
     }
 
     fn string(
         memory: &Memory,
         registers: &Registers,
         pointer: usize,
-        message: &str,
+        context: &str,
     ) -> Result<String, Exception> {
         let mut bytes = Vec::new();
         let mut address = pointer + registers.get_data_section_pointer();
 
         loop {
-            let word = match memory.read(address) {
-                Ok(word) => word,
-                Err(exception) => {
-                    return Err(Exception::Decoder(BaseException::new(
-                        format!(
-                            "{}. Failed to decode string byte at address {}.",
-                            message, address
-                        ),
-                        Some(Box::new(exception)),
-                    )));
-                }
-            };
-            let value: u8 = match u32::from_be_bytes(*word).try_into() {
-                Ok(byte) => byte,
-                Err(error) => {
-                    return Err(Exception::Decoder(BaseException::new(
-                        format!(
-                            "{}. Failed decode string byte at address {}: value did not fit in a single byte.",
-                            message, address
-                        ),
-                        Some(Box::new(error.to_string().into())),
-                    )));
-                }
-            };
+            let word = memory.read(address).map_err(|e| {
+                Exception::Decoder(BaseException::new(
+                    format!("{}: failed to read byte at address {}", context, address),
+                    Some(Box::new(e)),
+                ))
+            })?;
+            let value: u8 = u32::from_be_bytes(*word).try_into().map_err(|e| {
+                Exception::Decoder(BaseException::new(
+                    format!(
+                        "{}: value at address {} does not fit in a byte",
+                        context, address
+                    ),
+                    Some(Box::new(format!("{}", e).into())),
+                ))
+            })?;
 
-            // Return the string if we've reached the null terminator.
             if value == 0 {
-                return match String::from_utf8(bytes) {
-                    Ok(string) => Ok(string),
-                    Err(error) => Err(Exception::Decoder(BaseException::new(
-                        format!(
-                            "{}. Failed to decode string bytes at address {}.",
-                            message, address
-                        ),
-                        Some(Box::new(error.to_string().into())),
-                    ))),
-                };
+                return String::from_utf8(bytes).map_err(|e| {
+                    Exception::Decoder(BaseException::new(
+                        format!("{}: invalid UTF-8 at address {}", context, address),
+                        Some(Box::new(e.to_string().into())),
+                    ))
+                });
             }
 
             bytes.push(value);
@@ -105,41 +86,19 @@ impl Decoder {
         op_code: OpCode,
         instruction_bytes: [[u8; 4]; 4],
     ) -> Result<Instruction, Exception> {
-        match Self::expect_not_nop(op_code) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    format!(
-                        "Failed to decode immediate instruction with opcode '{:?}'.",
-                        op_code
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        Self::expect_not_nop(op_code)?;
 
         let register = u32::from_be_bytes(instruction_bytes[1]);
 
         match op_code {
             OpCode::LoadString | OpCode::LoadFile => {
                 let pointer = u32::from_be_bytes(instruction_bytes[2]) as usize;
-                let string = match Self::string(
+                let string = Self::string(
                     memory,
                     registers,
                     pointer,
-                    &format!("Failed decode immediate string for opcode '{:?}'", op_code),
-                ) {
-                    Ok(string) => string,
-                    Err(exception) => {
-                        return Err(Exception::Decoder(BaseException::new(
-                            format!(
-                                "Failed to decode immediate string for opcode '{:?}'",
-                                op_code
-                            ),
-                            Some(Box::new(exception)),
-                        )));
-                    }
-                };
+                    &format!("Decoding string for {:?}", op_code),
+                )?;
 
                 match op_code {
                     OpCode::LoadString => Ok(Instruction::LoadString(LoadStringInstruction {
@@ -150,13 +109,7 @@ impl Decoder {
                         destination_register: register,
                         file_path: string,
                     })),
-                    _ => Err(Exception::Decoder(BaseException::new(
-                        format!(
-                            "Failed to decode immediate instruction: invalid opcode '{:?}'.",
-                            op_code
-                        ),
-                        None,
-                    ))),
+                    _ => unreachable!(),
                 }
             }
             OpCode::LoadImmediate => Ok(Instruction::LoadImmediate(LoadImmediateInstruction {
@@ -183,18 +136,7 @@ impl Decoder {
     }
 
     fn branch(op_code: OpCode, instruction_bytes: [[u8; 4]; 4]) -> Result<Instruction, Exception> {
-        match Self::expect_not_nop(op_code) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    format!(
-                        "Failed to decode branch instruction with opcode '{:?}'.",
-                        op_code
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        Self::expect_not_nop(op_code)?;
 
         let source_register_1 = u32::from_be_bytes(instruction_bytes[1]);
         let source_register_2 = u32::from_be_bytes(instruction_bytes[2]);
@@ -226,18 +168,7 @@ impl Decoder {
     }
 
     fn no_register(op_code: OpCode) -> Result<Instruction, Exception> {
-        match Self::expect_not_nop(op_code) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    format!(
-                        "Failed to decode no register instruction with opcode '{:?}'.",
-                        op_code
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        Self::expect_not_nop(op_code)?;
 
         match op_code {
             // Control flow.
@@ -261,40 +192,15 @@ impl Decoder {
         op_code: OpCode,
         instruction_bytes: [[u8; 4]; 4],
     ) -> Result<Instruction, Exception> {
-        match Self::expect_not_nop(op_code) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    format!(
-                        "Failed to decode no register string instruction with opcode '{:?}'.",
-                        op_code
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        Self::expect_not_nop(op_code)?;
 
         let pointer = u32::from_be_bytes(instruction_bytes[1]) as usize;
-        let string = match Self::string(
+        let string = Self::string(
             memory,
             registers,
             pointer,
-            &format!(
-                "Failed to decode no register string instruction for opcode '{:?}'",
-                op_code
-            ),
-        ) {
-            Ok(string) => string,
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    format!(
-                        "Failed to decode no register string instruction for opcode '{:?}'",
-                        op_code
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+            &format!("Decoding string for {:?}", op_code),
+        )?;
 
         match op_code {
             OpCode::ContextSetRole => Ok(Instruction::ContextSetRole(ContextSetRoleInstruction {
@@ -314,18 +220,7 @@ impl Decoder {
         op_code: OpCode,
         instruction_bytes: [[u8; 4]; 4],
     ) -> Result<Instruction, Exception> {
-        match Self::expect_not_nop(op_code) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    format!(
-                        "Failed to decode single-register instruction with opcode '{:?}'.",
-                        op_code
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        Self::expect_not_nop(op_code)?;
 
         let register = u32::from_be_bytes(instruction_bytes[1]);
 
@@ -363,18 +258,7 @@ impl Decoder {
         op_code: OpCode,
         instruction_bytes: [[u8; 4]; 4],
     ) -> Result<Instruction, Exception> {
-        match Self::expect_not_nop(op_code) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    format!(
-                        "Failed to decode double-register instruction with opcode '{:?}'.",
-                        op_code
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        Self::expect_not_nop(op_code)?;
 
         let destination_register = u32::from_be_bytes(instruction_bytes[1]);
         let source_register = u32::from_be_bytes(instruction_bytes[2]);
@@ -414,18 +298,7 @@ impl Decoder {
         op_code: OpCode,
         instruction_bytes: [[u8; 4]; 4],
     ) -> Result<Instruction, Exception> {
-        match Self::expect_not_nop(op_code) {
-            Ok(_) => (),
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    format!(
-                        "Failed to decode triple-register instruction with opcode '{:?}'.",
-                        op_code
-                    ),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        Self::expect_not_nop(op_code)?;
 
         let destination_register = u32::from_be_bytes(instruction_bytes[1]);
         let source_register_1 = u32::from_be_bytes(instruction_bytes[2]);
@@ -452,15 +325,7 @@ impl Decoder {
         registers: &Registers,
         instruction_bytes: [[u8; 4]; 4],
     ) -> Result<Instruction, Exception> {
-        let op_code = match Self::op_code(&instruction_bytes[0]) {
-            Ok(op_code) => op_code,
-            Err(exception) => {
-                return Err(Exception::Decoder(BaseException::new(
-                    "Failed to decode instruction opcode.".to_string(),
-                    Some(Box::new(exception)),
-                )));
-            }
-        };
+        let op_code = Self::op_code(&instruction_bytes[0])?;
 
         match op_code {
             // Data movement.

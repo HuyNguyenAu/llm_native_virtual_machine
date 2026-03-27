@@ -16,56 +16,43 @@ use crate::{
 };
 
 fn start_up() -> Result<(), Exception> {
-    if let Err(error) = std::fs::create_dir_all(constants::BUILD_DIR) {
-        return Err(Exception::Program(BaseException::new(
+    std::fs::create_dir_all(constants::BUILD_DIR).map_err(|e| {
+        Exception::Program(BaseException::new(
             format!("Failed to create build directory: {}", constants::BUILD_DIR),
-            Some(Box::new(error.into())),
-        )));
-    }
-
-    Ok(())
+            Some(Box::new(e.into())),
+        ))
+    })
 }
 
 fn config() -> Result<Config, Exception> {
-    match dotenv::dotenv().ok() {
-        Some(_) => (),
-        None => {
-            return Err(Exception::Program(BaseException::new(
-                "Failed to load .env file".to_string(),
-                None,
-            )));
-        }
+    if dotenv::dotenv().ok().is_none() {
+        return Err(Exception::Program(BaseException::new(
+            "Failed to load .env file".to_string(),
+            None,
+        )));
     }
 
-    let text_model = match env::var(constants::TEXT_MODEL_ENV) {
-        Ok(value) => value,
-        Err(error) => {
-            return Err(Exception::Program(BaseException::new(
-                format!("{} must be set in the .env file", constants::TEXT_MODEL_ENV),
-                Some(Box::new(format!("{:#?}", error).into())),
-            )));
-        }
-    };
-    let embedding_model = match env::var(constants::EMBEDDING_MODEL_ENV) {
-        Ok(value) => value,
-        Err(error) => {
-            return Err(Exception::Program(BaseException::new(
-                format!(
-                    "{} must be set in the .env file",
-                    constants::EMBEDDING_MODEL_ENV
-                ),
-                Some(Box::new(format!("{:#?}", error).into())),
-            )));
-        }
-    };
-    let debug_build = match env::var(constants::DEBUG_BUILD_ENV) {
-        Ok(value) => value == "true",
-        Err(_) => false,
-    };
-    let debug_run = match env::var(constants::DEBUG_RUN_ENV) {
-        Ok(value) => value == "true",
-        Err(_) => false,
-    };
+    let text_model = env::var(constants::TEXT_MODEL_ENV).map_err(|e| {
+        Exception::Program(BaseException::new(
+            format!("{} must be set in the .env file", constants::TEXT_MODEL_ENV),
+            Some(Box::new(format!("{:#?}", e).into())),
+        ))
+    })?;
+    let embedding_model = env::var(constants::EMBEDDING_MODEL_ENV).map_err(|e| {
+        Exception::Program(BaseException::new(
+            format!(
+                "{} must be set in the .env file",
+                constants::EMBEDDING_MODEL_ENV
+            ),
+            Some(Box::new(format!("{:#?}", e).into())),
+        ))
+    })?;
+    let debug_build = env::var(constants::DEBUG_BUILD_ENV)
+        .map(|v| v == "true")
+        .unwrap_or(false);
+    let debug_run = env::var(constants::DEBUG_RUN_ENV)
+        .map(|v| v == "true")
+        .unwrap_or(false);
 
     Ok(Config {
         text_model,
@@ -76,26 +63,20 @@ fn config() -> Result<Config, Exception> {
 }
 
 fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
-    let source = match read_to_string(file_path) {
-        Ok(source) => source,
-        Err(error) => {
-            return Err(Exception::Program(BaseException::new(
-                "Failed to build. Failed to read source file.".to_string(),
-                Some(Box::new(error.into())),
-            )));
-        }
-    };
+    let source = read_to_string(file_path).map_err(|e| {
+        Exception::Program(BaseException::new(
+            "Failed to read source file.".to_string(),
+            Some(Box::new(e.into())),
+        ))
+    })?;
 
     let mut compiler = assembler::Assembler::new(source);
-    let byte_code = match compiler.assemble() {
-        Ok(byte_code) => byte_code,
-        Err(error) => {
-            return Err(Exception::Program(BaseException::new(
-                "Failed to build. Failed to assemble source file.".to_string(),
-                Some(Box::new(error.to_string().into())),
-            )));
-        }
-    };
+    let byte_code = compiler.assemble().map_err(|e| {
+        Exception::Program(BaseException::new(
+            "Failed to assemble source file.".to_string(),
+            Some(Box::new(e.to_string().into())),
+        ))
+    })?;
 
     if config.debug_build {
         println!("Assembled byte code ({} bytes):", byte_code.len());
@@ -109,28 +90,21 @@ fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
     }
 
     let path = Path::new(file_path);
-    let stem = match path.file_stem().and_then(|s| s.to_str()) {
-        Some(stem) => stem,
-        None => {
-            return Err(Exception::Program(BaseException::new(
-                "Failed to build. Failed to determine output filename from source file."
-                    .to_string(),
-                None,
-            )));
-        }
-    };
+    let stem = path.file_stem().and_then(|s| s.to_str()).ok_or_else(|| {
+        Exception::Program(BaseException::new(
+            "Failed to determine output filename from source file.".to_string(),
+            None,
+        ))
+    })?;
 
     let output_file_name = format!("{}/{}.lpu", constants::BUILD_DIR, stem);
 
-    match write(&output_file_name, byte_code) {
-        Ok(_) => (),
-        Err(error) => {
-            return Err(Exception::Program(BaseException::new(
-                "Failed to build. Failed to write byte code to output file.".to_string(),
-                Some(Box::new(error.into())),
-            )));
-        }
-    }
+    write(&output_file_name, byte_code).map_err(|e| {
+        Exception::Program(BaseException::new(
+            "Failed to write byte code to output file.".to_string(),
+            Some(Box::new(e.into())),
+        ))
+    })?;
 
     println!("Build successful! Output written to {}", output_file_name);
 
@@ -138,39 +112,28 @@ fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
 }
 
 fn run(file_path: &str, config: &Config) -> Result<(), Exception> {
-    let data = match read(file_path) {
-        Ok(data) => data,
-        Err(error) => {
-            return Err(Exception::Program(BaseException::new(
-                "Failed to run. Failed to read byte code file.".to_string(),
-                Some(Box::new(error.into())),
-            )));
-        }
-    };
+    let data = read(file_path).map_err(|e| {
+        Exception::Program(BaseException::new(
+            "Failed to read byte code file.".to_string(),
+            Some(Box::new(e.into())),
+        ))
+    })?;
 
     let mut processor = processor::Processor::new(config.clone());
 
-    match processor.load(&data) {
-        Ok(_) => (),
-        Err(exception) => {
-            return Err(Exception::Program(BaseException::new(
-                "Failed to run. Failed to load byte code file.".to_string(),
-                Some(Box::new(exception)),
-            )));
-        }
-    }
+    processor.load(&data).map_err(|e| {
+        Exception::Program(BaseException::new(
+            "Failed to load byte code file.".to_string(),
+            Some(Box::new(e)),
+        ))
+    })?;
 
-    match processor.run() {
-        Ok(_) => (),
-        Err(exception) => {
-            return Err(Exception::Program(BaseException::new(
-                "Failed to run program.".to_string(),
-                Some(Box::new(exception)),
-            )));
-        }
-    }
-
-    Ok(())
+    processor.run().map_err(|e| {
+        Exception::Program(BaseException::new(
+            "Failed to run program.".to_string(),
+            Some(Box::new(e)),
+        ))
+    })
 }
 
 fn main() {

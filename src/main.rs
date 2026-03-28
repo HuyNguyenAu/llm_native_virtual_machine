@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    config::Config,
+    config::{Config, TextModelOverrides},
     exception::{BaseException, Exception},
 };
 
@@ -57,9 +57,75 @@ fn config() -> Result<Config, Exception> {
         .map(|v| v == "true")
         .unwrap_or(false);
 
+    let text_model_overrides = TextModelOverrides {
+        stream: env::var("TEXT_MODEL_STREAM").ok().map(|v| v == "true"),
+        return_progress: env::var("TEXT_MODEL_RETURN_PROGRESS")
+            .ok()
+            .map(|v| v == "true"),
+        reasoning_format: env::var("TEXT_MODEL_REASONING_FORMAT").ok(),
+        temperature: env::var("TEXT_MODEL_TEMPERATURE")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        dynatemp_range: env::var("TEXT_MODEL_DYNATEMP_RANGE")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        dynatemp_exponent: env::var("TEXT_MODEL_DYNATEMP_EXPONENT")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        top_k: env::var("TEXT_MODEL_TOP_K")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        top_p: env::var("TEXT_MODEL_TOP_P")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        min_p: env::var("TEXT_MODEL_MIN_P")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        xtc_probability: env::var("TEXT_MODEL_XTC_PROBABILITY")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        xtc_threshold: env::var("TEXT_MODEL_XTC_THRESHOLD")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        typ_p: env::var("TEXT_MODEL_TYP_P")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        max_tokens: env::var("TEXT_MODEL_MAX_TOKENS")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        repeat_last_n: env::var("TEXT_MODEL_REPEAT_LAST_N")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        repeat_penalty: env::var("TEXT_MODEL_REPEAT_PENALTY")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        presence_penalty: env::var("TEXT_MODEL_PRESENCE_PENALTY")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        frequency_penalty: env::var("TEXT_MODEL_FREQUENCY_PENALTY")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        dry_multiplier: env::var("TEXT_MODEL_DRY_MULTIPLIER")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        dry_base: env::var("TEXT_MODEL_DRY_BASE")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        dry_allowed_length: env::var("TEXT_MODEL_DRY_ALLOWED_LENGTH")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        dry_penalty_last_n: env::var("TEXT_MODEL_DRY_PENALTY_LAST_N")
+            .ok()
+            .and_then(|v| v.parse().ok()),
+        timings_per_token: env::var("TEXT_MODEL_TIMINGS_PER_TOKEN")
+            .ok()
+            .map(|v| v == "true"),
+    };
+
     Ok(Config {
         text_model,
         embedding_model,
+        text_model_overrides,
         debug_build,
         debug_run,
         debug_chat,

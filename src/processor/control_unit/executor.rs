@@ -2,6 +2,7 @@ use std::fs::read_to_string;
 
 use crate::{
     assembler::roles,
+    config::TextModelOverrides,
     exception::{BaseException, Exception},
     processor::{
         control_unit::{
@@ -219,12 +220,13 @@ impl Executor {
         registers: &mut Registers,
         instruction: &MapInstruction,
         text_model: &str,
+        text_model_overrides: &TextModelOverrides,
         debug: bool,
         debug_chat: bool,
     ) -> Result<(), Exception> {
         let value = Self::read_text(registers, instruction.source_register)?.clone();
         let context = registers.get_context();
-        let result = LanguageLogicUnit::string(&value, context, text_model, debug_chat)?;
+        let result = LanguageLogicUnit::string(&value, context, text_model, text_model_overrides, debug_chat)?;
 
         crate::debug_print!(
             debug,
@@ -241,6 +243,7 @@ impl Executor {
         instruction: &EvalInstruction,
         text_model: &str,
         embedding_model: &str,
+        text_model_overrides: &TextModelOverrides,
         debug: bool,
         debug_chat: bool,
     ) -> Result<(), Exception> {
@@ -260,6 +263,7 @@ impl Executor {
             context,
             text_model,
             embedding_model,
+            text_model_overrides,
             debug_chat,
         )?;
 
@@ -460,6 +464,7 @@ impl Executor {
         instruction: &Instruction,
         text_model: &str,
         embedding_model: &str,
+        text_model_overrides: &TextModelOverrides,
         debug: bool,
         debug_chat: bool,
     ) -> Result<(), Exception> {
@@ -478,10 +483,10 @@ impl Executor {
             // I/O operations.
             Instruction::Output(i) => Self::output(registers, i, debug),
             // Generative operations.
-            Instruction::Map(i) => Self::map(registers, i, text_model, debug, debug_chat),
+            Instruction::Map(i) => Self::map(registers, i, text_model, text_model_overrides, debug, debug_chat),
             // Guardrails operations.
             Instruction::Eval(i) => {
-                Self::eval(registers, i, text_model, embedding_model, debug, debug_chat)
+                Self::eval(registers, i, text_model, embedding_model, text_model_overrides, debug, debug_chat)
             }
             Instruction::Similarity(i) => Self::similarity(registers, i, embedding_model, debug),
             // Context operations.

@@ -75,6 +75,7 @@ impl Processor {
                     instruction,
                     &self.config.text_model,
                     &self.config.embedding_model,
+                    &self.config.text_model_overrides,
                     self.config.debug_run,
                     self.config.debug_chat,
                 )

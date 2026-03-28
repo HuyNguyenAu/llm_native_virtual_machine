@@ -1,3 +1,4 @@
+use crate::config::TextModelOverrides;
 use crate::exception::{BaseException, Exception};
 use crate::processor::control_unit::decoder::Decoder;
 use crate::processor::control_unit::executor::Executor;
@@ -120,6 +121,7 @@ impl ControlUnit {
         instruction: Instruction,
         text_model: &str,
         embedding_model: &str,
+        text_model_overrides: &TextModelOverrides,
         debug: bool,
         debug_chat: bool,
     ) -> Result<(), Exception> {
@@ -129,6 +131,7 @@ impl ControlUnit {
             &instruction,
             text_model,
             embedding_model,
+            text_model_overrides,
             debug,
             debug_chat,
         )

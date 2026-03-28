@@ -1,5 +1,6 @@
 use crate::{
     assembler::roles,
+    config::TextModelOverrides,
     exception::{BaseException, Exception},
     processor::{
         control_unit::language_logic_unit::openai::{
@@ -22,22 +23,25 @@ const SYSTEM_PROMPT: &str =
 pub struct LanguageLogicUnit;
 
 impl LanguageLogicUnit {
-    fn default_text_model(model: &str) -> ModelTextConfig {
+    fn default_text_model(model: &str, overrides: &TextModelOverrides) -> ModelTextConfig {
         ModelTextConfig {
-            stream: false,
-            return_progress: false,
+            stream: overrides.stream.unwrap_or(false),
+            return_progress: overrides.return_progress.unwrap_or(false),
             model: model.to_string(),
-            reasoning_format: "auto".to_string(),
-            temperature: 0.1,
-            dynatemp_range: 0.0,
-            dynatemp_exponent: 1.0,
-            top_k: 50,
-            top_p: 0.95,
-            min_p: 0.05,
-            xtc_probability: 0.0,
-            xtc_threshold: 0.1,
-            typ_p: 1.0,
-            max_tokens: -1,
+            reasoning_format: overrides
+                .reasoning_format
+                .clone()
+                .unwrap_or_else(|| "auto".to_string()),
+            temperature: overrides.temperature.unwrap_or(0.3),
+            dynatemp_range: overrides.dynatemp_range.unwrap_or(0.0),
+            dynatemp_exponent: overrides.dynatemp_exponent.unwrap_or(1.0),
+            top_k: overrides.top_k.unwrap_or(50),
+            top_p: overrides.top_p.unwrap_or(0.95),
+            min_p: overrides.min_p.unwrap_or(0.15),
+            xtc_probability: overrides.xtc_probability.unwrap_or(0.0),
+            xtc_threshold: overrides.xtc_threshold.unwrap_or(0.1),
+            typ_p: overrides.typ_p.unwrap_or(1.0),
+            max_tokens: overrides.max_tokens.unwrap_or(-1),
             samplers: vec![
                 "penalties".to_string(),
                 "dry".to_string(),
@@ -49,15 +53,15 @@ impl LanguageLogicUnit {
                 "xtc".to_string(),
                 "temperature".to_string(),
             ],
-            repeat_last_n: 64,
-            repeat_penalty: 1.05,
-            presence_penalty: 0.0,
-            frequency_penalty: 0.0,
-            dry_multiplier: 0.0,
-            dry_base: 1.75,
-            dry_allowed_length: 2,
-            dry_penalty_last_n: -1,
-            timings_per_token: false,
+            repeat_last_n: overrides.repeat_last_n.unwrap_or(64),
+            repeat_penalty: overrides.repeat_penalty.unwrap_or(1.05),
+            presence_penalty: overrides.presence_penalty.unwrap_or(0.0),
+            frequency_penalty: overrides.frequency_penalty.unwrap_or(0.0),
+            dry_multiplier: overrides.dry_multiplier.unwrap_or(0.0),
+            dry_base: overrides.dry_base.unwrap_or(1.75),
+            dry_allowed_length: overrides.dry_allowed_length.unwrap_or(2),
+            dry_penalty_last_n: overrides.dry_penalty_last_n.unwrap_or(-1),
+            timings_per_token: overrides.timings_per_token.unwrap_or(false),
         }
     }
 
@@ -177,9 +181,10 @@ impl LanguageLogicUnit {
         content: &str,
         context: &[ContextMessage],
         text_model: &str,
+        text_model_overrides: &TextModelOverrides,
         debug_chat: bool,
     ) -> Result<String, Exception> {
-        let model = Self::default_text_model(text_model);
+        let model = Self::default_text_model(text_model, text_model_overrides);
         let messages = std::iter::once(OpenAIChatCompletionRequestText {
             role: roles::SYSTEM_ROLE.to_string(),
             content: SYSTEM_PROMPT.to_string(),
@@ -263,9 +268,10 @@ impl LanguageLogicUnit {
         micro_prompt: &str,
         context: &[ContextMessage],
         text_model: &str,
+        text_model_overrides: &TextModelOverrides,
         debug_chat: bool,
     ) -> Result<String, Exception> {
-        Self::chat(micro_prompt, context, text_model, debug_chat)
+        Self::chat(micro_prompt, context, text_model, text_model_overrides, debug_chat)
     }
 
     pub fn boolean(
@@ -275,9 +281,10 @@ impl LanguageLogicUnit {
         context: &[ContextMessage],
         text_model: &str,
         embedding_model: &str,
+        text_model_overrides: &TextModelOverrides,
         debug_chat: bool,
     ) -> Result<u32, Exception> {
-        let value = Self::string(micro_prompt, context, text_model, debug_chat)?;
+        let value = Self::string(micro_prompt, context, text_model, text_model_overrides, debug_chat)?;
 
         let max_true_score = true_values
             .iter()

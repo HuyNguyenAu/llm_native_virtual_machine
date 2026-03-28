@@ -53,12 +53,16 @@ fn config() -> Result<Config, Exception> {
     let debug_run = env::var(constants::DEBUG_RUN_ENV)
         .map(|v| v == "true")
         .unwrap_or(false);
+    let debug_chat = env::var(constants::DEBUG_CHAT_ENV)
+        .map(|v| v == "true")
+        .unwrap_or(false);
 
     Ok(Config {
         text_model,
         embedding_model,
         debug_build,
         debug_run,
+        debug_chat,
     })
 }
 

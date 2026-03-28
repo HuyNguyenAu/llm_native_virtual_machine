@@ -121,6 +121,7 @@ impl ControlUnit {
         text_model: &str,
         embedding_model: &str,
         debug: bool,
+        debug_chat: bool,
     ) -> Result<(), Exception> {
         Executor::execute(
             &mut self.memory,
@@ -129,6 +130,7 @@ impl ControlUnit {
             text_model,
             embedding_model,
             debug,
+            debug_chat,
         )
         .map_err(|e| {
             Exception::ControlUnit(BaseException::new(

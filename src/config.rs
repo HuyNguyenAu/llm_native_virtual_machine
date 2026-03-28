@@ -4,4 +4,5 @@ pub struct Config {
     pub embedding_model: String,
     pub debug_build: bool,
     pub debug_run: bool,
+    pub debug_chat: bool,
 }

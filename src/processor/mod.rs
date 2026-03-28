@@ -76,6 +76,7 @@ impl Processor {
                     &self.config.text_model,
                     &self.config.embedding_model,
                     self.config.debug_run,
+                    self.config.debug_chat,
                 )
                 .map_err(|e| {
                     Exception::Processor(BaseException::new(

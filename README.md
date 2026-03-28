@@ -206,13 +206,13 @@ Some tips for working with smaller models:
    cd language_processor_unit
    ```
 2. Install [llama.cpp](https://github.com/ggml-org/llama.cpp).
-3. Download [LFM2 2.6B](https://huggingface.co/LiquidAI/LFM2-2.6B-GGUF).
+3. Download [LFM2.5-1.2B-Instruct-Q8_0](https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF).
 4. Download [Qwen3 Embedding 0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF).
 5. Create the `.env` file in the root directory with the following content:
 
    ```
    # File name of the text model in the models directory.
-   TEXT_MODEL="LFM2-2.6B-Q5_K_M"
+   TEXT_MODEL="LFM2.5-1.2B-Instruct-Q8_0"
 
    # File name of the embedding model in the models directory.
    EMBEDDING_MODEL="Qwen3-Embedding-0.6B-Q4_1-imat"
@@ -235,7 +235,7 @@ Some tips for working with smaller models:
 
 6. Start the LLama.cpp server. This will use the text model for both text generation and embeddings, which is faster but less accurate for embeddings. Make sure to specify the `--embeddings` flag and the correct pooling strategy:
    ```bash
-   ./llama-server --embeddings --pooling mean -m C:\llama\models\LFM2-2.6B-Q5_K_M.gguf
+   ./llama-server --embeddings --pooling mean -m C:\llama\models\LFM2.5-1.2B-Instruct-Q8_0.gguf
    ```
 
 ### Run The Example Program

@@ -12,7 +12,7 @@ Think of this assembly language as a middle ground between traditional programmi
 
 I really wanted to imagin a future where we can write code where we don't have to worry about edge cases or complex logic to handle unstructured data. Instead, we can just write code that describes what we want to achieve, and let the language model handle the complexity of how to achieve it. In short, **we can write code that is more focused on the "what" rather than the "how"**.
 
-Here's an example of what a program written in this assembly language might looks like:
+Here's an example of what a program written in this assembly language looks like:
 
 ```
 ; Program: Room Comfort Adjustment System
@@ -20,60 +20,117 @@ Here's an example of what a program written in this assembly language might look
 ; Output: Adjusted temperature and lighting settings.
 
 ; Load sensor data and user feedback.
-LF  X1, "examples/data/room_sensor_data.json"
-LS  X2, "It's too dark to read and I am sweating."
+LF   X1, "examples/data/room_sensor_data.json"
+LS   X2, "It's too dark to read and I am sweating."
 
-PSH X1              ; Push the sensor data the context stack for processing.
+PSH  X1                     ; Push the sensor data the context stack for processing.
 
 ; Sense: Brief description of the current state of the room based on sensor data.
-LS  X3, "A sentence that describes the current state of the room. Include details about temperature, lighting, and any other relevant factors."
-MRF X4, X3
+LS  X3, "A sentence that describes the current state of the room with only the following information: temperature in celsius, and light intensity in percentage."
+MAP  X4, X3
 
-DRP                 ; Drop the sensor data from the context stack.
-SRL "assistant"     ; Set the role to assistant to process the sensed state.
-PSH X4              ; Push the summarised state for context.
+; Build the context for adjustments.
+DRP                         ; Clear context stack to build a new context for adjustments.
 
-SRL "user"          ; Set the role to user for processing the user's feedback.
-PSH X2              ; Push the expanded user feedback for context.
-SNP X31             ; Save the current state before making adjustments, allowing for a retry if needed.
+LS   X3, "Current room state:"
+PSH  X3
+PSH  X4                     ; Push the summarised state for context.
 
-LI  X30, 5          ; Set a retry limit to prevent infinite loops in case of invalid adjustments.
+SNP  X31                    ; Save the current room state context for later adjustment.
 
-RETRY:
-RST X31             ; Restore the previous state for a retry if needed.
-DEC X30, 1          ; Decrement the retry counter.
+; Build the temperature feedback context for adjustments.
+CLR                         ; Clear context stack to classify user temperature feedback for adjustments.
+PSH  X2                     ; Push the user feedback to the context stack for processing.
 
-; Think: Analyze the sensed state and determine necessary adjustments for physical comfort.
-LS  X3, "What are the changes to the room's temperature(celsius) and lighting(percent) to achieve optimal physical comfort based on the current state and user feedback."
-PRJ X5, X3
+LS   X3, "Classify the following temperature feedback into a category (TOO_COLD, TOO_WARM, COMFORTABLE, UNRELATED) and intensity level (Mild, Moderate, Severe). Category:\nIntensity:"
+MAP  X5, X3
 
-PSH X5              ; Push the adjustments for context.
+RST  X31                    ; Restore the room state context to combine with the classified temperature feedback for adjustments.
 
-LI  X3, 0
-BEQ X30, X3, ABORT  ; If retry limit is reached, abort the operation.
+LS   X3, "Temperature user feedback:"
+PSH  X3
+PSH  X5                     ; Push the user feedback for context.
 
-LS  X3, "The temperature mentioned is a number from 18 to 24."
-AUD X6, X3          ; Guardrail for temperature adjustment.
+SNP  X30                    ; Save the temperature feedback context for later adjustment.
 
-LI X3, 0
-BEQ X6, X3, RETRY
+; Build the light feedback context for adjustments.
+CLR                         ; Clear context stack to classify user light feedback for adjustments.
+PSH  X2                     ; Push the user feedback to the context stack for processing.
 
-LS X3, "The lighting mentioned is a number from 5 to 100."
-AUD X7, X3          ; Guardrail for light intensity.
+LS   X3, "Classify the following light feedback into a category (TOO_DARK, TOO_BRIGHT, COMFORTABLE, UNRELATED) and intensity level (Mild, Moderate, Severe). Category:\nIntensity:"
+MAP  X6, X3
 
-LI X3, 0
-BEQ X7, X3, RETRY
+RST  X31                    ; Restore the room state context to combine with the classified light feedback for adjustments.
 
-; Guardrails: Ensure that the adjustments are within safe and reasonable limits.
-LS  X3, "{ \"temp_celsius\": number, \"light_percent\": number }"
-MRF X8, X3
+LS   X3, "Light intensity user feedback:"
+PSH  X3
+PSH  X6                     ; Push the light feedback for context.
+
+SNP  X31                    ; Save the light feedback context for later adjustment.
+
+; Think: Adjust the temperature based on the classified feedback.
+LI   X29, 5                 ; Set a retry limit to prevent infinite loops in case of invalid adjustments.
+
+RETRY_TEMP:
+RST  X30                    ; Restore the temperature feedback context for adjustments.
+DEC  X29, 1                 ; Decrement the retry counter.
+
+LI   X3, 0
+BEQ  X29, X3, ABORT_TEMP    ; If retry limit is reached, abort the operation.
+
+LS   X3, "Intensity Factor: Mild = 1, Moderate = 2, Severe = 3. If 'TOO_COLD', increase temperature by (0.5 * intensity_factor). If 'TOO_WARM', decrease temperature by (0.5 * intensity_factor). If 'COMFORTABLE', no change to temperature. If 'UNRELATED', no change to temperature.\nWhat is the new room temperature?"
+MAP  X7, X3
+
+; Guardrails: Ensure that the temperature adjustments are within safe and reasonable limits.
+CLR                         ; Clear context stack to validate the adjusted temperature.
+PSH  X7                     ; Push the adjusted temperature for validation.
+
+LS   X3, "Is the temperature mentioned above one of the following: 18°C, 19°C, 20°C, 21°C, 22°C, 23°C, 24°C?"
+EVAL X8, X3
+
+LI   X3, 0
+BEQ  X8, X3, RETRY_TEMP
+
+; Think: Adjust the light intensity based on the classified feedback.
+LI   X29, 5                 ; Set a retry limit to prevent infinite loops in case of invalid adjustments.
+
+RETRY_LIGHT:
+RST  X31                    ; Restore the light feedback context for adjustments.
+DEC  X29, 1                 ; Decrement the retry counter.
+
+LI   X3, 0
+BEQ  X29, X3, ABORT_LIGHT   ; If retry limit is reached, abort the operation.
+
+LS   X3, "Intensity Factor: Mild = 1, Moderate = 2, Severe = 3. If 'TOO_DARK', increase light by (10% * intensity). If 'TOO_BRIGHT', decrease light by (10% * intensity). If 'COMFORTABLE', no change to light. If 'UNRELATED', no change to light.\nWhat is the new light intensity percentage?"
+MAP  X9, X3
+
+; Guardrails: Ensure that the light intensity adjustments are within safe and reasonable limits.
+CLR                         ; Clear context stack to validate the adjusted light intensity.
+PSH  X9                     ; Push the adjusted light intensity for validation.
+
+LS   X3, "Is the light intensity percentage mentioned above between 0% and 100%?"
+EVAL X10, X3
+
+LI   X3, 0
+BEQ  X10, X3, RETRY_LIGHT
 
 ; Act: Implement the adjustments to achieve the desired physical comfort.
-OUT X8
+CLR                         ; Clear context stack to prepare for output.
+PSH  X7                     ; Push the final adjusted temperature for output.
+PSH  X9                     ; Push the final adjusted light intensity for output.
+
+LS   X3, "{ \"temp_celsius\": number, \"light_percent\": number }"
+MAP  X11, X3
+
+OUT  X11
 EXIT
 
-ABORT:
-LS  X3, "Failed to adjust the room's comfort within the 5 attempts after multiple attempts."
+ABORT_TEMP:
+LS  X3, "Failed to adjust the room's temperature within the 5 attempts after multiple attempts."
+OUT X3
+
+ABORT_LIGHT:
+LS  X3, "Failed to adjust the room's light intensity within the 5 attempts after multiple attempts."
 OUT X3
 ```
 
@@ -98,34 +155,31 @@ The instructions `snp`, `rst`, `psh`, `pop`, and `drp` are used to manage the co
 
 The instruction set is closely inspired by RISC-V assembly language:
 
-| Instruction | Description                                                              | Use                        |
-| ----------- | ------------------------------------------------------------------------ | -------------------------- |
-| LS          | Load string into rd                                                      | `ls rd, "example"`         |
-| LI          | Load immediate into rd                                                   | `li rd, imm`               |
-| LF          | Load file into rd                                                        | `lf rd, "file_path"`       |
-| MV          | Copy rs into rd                                                          | `mv rd, rs`                |
-| BEQ         | Go to label if rs1 = rs2                                                 | `beq rs1, rs2, label_name` |
-| BLT         | Go to label if rs1 < rs2                                                 | `blt rs1, rs2, label_name` |
-| BLE         | Go to label if rs1 <= rs2                                                | `ble rs1, rs2, label_name` |
-| BGT         | Go to label if rs1 > rs2                                                 | `bgt rs1, rs2, label_name` |
-| BGE         | Go to label if rs1 >= rs2                                                | `bge rs1, rs2, label_name` |
-| CLR         | Clear the context stack                                                  | `clr`                      |
-| SNP         | Save the current state to the context stack and store in rd              | `snp rd`                   |
-| RST         | Restore the state from rs in the context stack                           | `rst rs`                   |
-| PSH         | Push rs into the context stack                                           | `psh rs`                   |
-| POP         | Pop the bottom of the context stack into rd                              | `pop rd`                   |
-| DRP         | Drop the bottom of the context stack                                     | `drp`                      |
-| SRL         | Set the role of the context push                                         | `srl "user"\|"assistant"`  |
-| MRF         | Change the shape to the form of rs and store in rd                       | `mrf rd, rs`               |
-| PRJ         | Predict the next step when rs occurs and store in rd                     | `prj rd, rs`               |
-| DST         | Boil down to the essence of rs and store in rd                           | `dst rd, rs`               |
-| COR         | Find the link, difference, or similarity comparing to rs and store in rd | `cor rd, rs`               |
-| AUD         | Check if complies with rs and store 100 if compliant, 0 otherwise in rd  | `aud rd, rs`               |
-| SIM         | Cosine similarity between rs and rs and store in rd (0 - 100)            | `sim rd, rs`               |
-| LABEL       | Define a label. Required for branching instructions                      | `label_name:`              |
-| OUT         | Print the value of rs                                                    | `out rs\|imm`              |
-| DEC         | Decrement the value in rs by num                                         | `dec rd, num`              |
-| EXIT        | Exit the program                                                         | `exit`                     |
+| Instruction | Description                                                                         | Use                        |
+| ----------- | ----------------------------------------------------------------------------------- | -------------------------- |
+| LS          | Load string into rd                                                                 | `ls rd, "example"`         |
+| LI          | Load immediate into rd                                                              | `li rd, imm`               |
+| LF          | Load file into rd                                                                   | `lf rd, "file_path"`       |
+| MV          | Copy rs into rd                                                                     | `mv rd, rs`                |
+| BEQ         | Go to label if rs1 = rs2                                                            | `beq rs1, rs2, label_name` |
+| BLT         | Go to label if rs1 < rs2                                                            | `blt rs1, rs2, label_name` |
+| BLE         | Go to label if rs1 <= rs2                                                           | `ble rs1, rs2, label_name` |
+| BGT         | Go to label if rs1 > rs2                                                            | `bgt rs1, rs2, label_name` |
+| BGE         | Go to label if rs1 >= rs2                                                           | `bge rs1, rs2, label_name` |
+| CLR         | Clear the context stack                                                             | `clr`                      |
+| SNP         | Save the current state to the context stack and store in rd                         | `snp rd`                   |
+| RST         | Restore the state from rs in the context stack                                      | `rst rs`                   |
+| PSH         | Push rs into the context stack                                                      | `psh rs`                   |
+| POP         | Pop the bottom of the context stack into rd                                         | `pop rd`                   |
+| DRP         | Drop the bottom of the context stack                                                | `drp`                      |
+| SRL         | Set the role of the context push                                                    | `srl "user"\|"assistant"`  |
+| MAP         | Change the shape to the form of rs and store in rd                                  | `map rd, rs`               |
+| EVAL        | Boolean evaluation of the question rs and store in rd (0 = false/no,, 1 = true/yes) | `eval rd, rs`              |
+| SIM         | Cosine similarity between rs and rs and store in rd (0 - 100)                       | `sim rd, rs`               |
+| LABEL       | Define a label. Required for branching instructions                                 | `label_name:`              |
+| OUT         | Print the value of rs                                                               | `out rs\|imm`              |
+| DEC         | Decrement the value in rs by num                                                    | `dec rd, num`              |
+| EXIT        | Exit the program                                                                    | `exit`                     |
 
 ## Smaller Models
 

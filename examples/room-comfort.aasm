@@ -111,6 +111,7 @@ EXIT
 ABORT_TEMP:
 LS  X3, "Failed to adjust the room's temperature within the 5 attempts after multiple attempts."
 OUT X3
+EXIT
 
 ABORT_LIGHT:
 LS  X3, "Failed to adjust the room's light intensity within the 5 attempts after multiple attempts."

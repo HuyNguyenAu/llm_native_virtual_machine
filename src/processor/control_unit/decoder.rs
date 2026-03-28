@@ -21,9 +21,9 @@ impl Decoder {
     fn op_code(bytes: &[u8; 4]) -> Result<OpCode, Exception> {
         let value = u32::from_be_bytes(*bytes);
         OpCode::try_from(value).map_err(|e| {
-            Exception::Decoder(BaseException::new(
+            Exception::Decoder(BaseException::caused_by(
                 format!("Failed to decode opcode: 0x{:08X}", value),
-                Some(Box::new(e.into())),
+                e,
             ))
         })
     }
@@ -39,26 +39,26 @@ impl Decoder {
 
         loop {
             let word = memory.read(address).map_err(|e| {
-                Exception::Decoder(BaseException::new(
+                Exception::Decoder(BaseException::caused_by(
                     format!("{}: failed to read byte at address {}", context, address),
-                    Some(Box::new(e)),
+                    e,
                 ))
             })?;
             let value: u8 = u32::from_be_bytes(*word).try_into().map_err(|e| {
-                Exception::Decoder(BaseException::new(
+                Exception::Decoder(BaseException::caused_by(
                     format!(
                         "{}: value at address {} does not fit in a byte",
                         context, address
                     ),
-                    Some(Box::new(format!("{}", e).into())),
+                    format!("{}", e),
                 ))
             })?;
 
             if value == 0 {
                 return String::from_utf8(bytes).map_err(|e| {
-                    Exception::Decoder(BaseException::new(
+                    Exception::Decoder(BaseException::caused_by(
                         format!("{}: invalid UTF-8 at address {}", context, address),
-                        Some(Box::new(e.to_string().into())),
+                        e.to_string(),
                     ))
                 });
             }

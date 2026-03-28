@@ -17,18 +17,18 @@ use crate::{
 
 fn start_up() -> Result<(), Exception> {
     std::fs::create_dir_all(constants::BUILD_DIR).map_err(|e| {
-        Exception::Program(BaseException::new(
+        Exception::Program(BaseException::caused_by(
             format!("Failed to create build directory: {}", constants::BUILD_DIR),
-            Some(Box::new(e.into())),
+            e,
         ))
     })
 }
 
 fn env_required(key: &str) -> Result<String, Exception> {
     env::var(key).map_err(|e| {
-        Exception::Program(BaseException::new(
+        Exception::Program(BaseException::caused_by(
             format!("{} must be set in the .env file", key),
-            Some(Box::new(format!("{:#?}", e).into())),
+            format!("{:#?}", e),
         ))
     })
 }
@@ -88,17 +88,14 @@ fn config() -> Result<Config, Exception> {
 
 fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
     let source = read_to_string(file_path).map_err(|e| {
-        Exception::Program(BaseException::new(
-            "Failed to read source file.".to_string(),
-            Some(Box::new(e.into())),
-        ))
+        Exception::Program(BaseException::caused_by("Failed to read source file.", e))
     })?;
 
     let mut compiler = assembler::Assembler::new(source);
     let byte_code = compiler.assemble().map_err(|e| {
-        Exception::Program(BaseException::new(
-            "Failed to assemble source file.".to_string(),
-            Some(Box::new(e.to_string().into())),
+        Exception::Program(BaseException::caused_by(
+            "Failed to assemble source file.",
+            e.to_string(),
         ))
     })?;
 
@@ -124,9 +121,9 @@ fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
     let output_file_name = format!("{}/{}.lpu", constants::BUILD_DIR, stem);
 
     write(&output_file_name, byte_code).map_err(|e| {
-        Exception::Program(BaseException::new(
-            "Failed to write byte code to output file.".to_string(),
-            Some(Box::new(e.into())),
+        Exception::Program(BaseException::caused_by(
+            "Failed to write byte code to output file.",
+            e,
         ))
     })?;
 
@@ -137,75 +134,61 @@ fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
 
 fn run(file_path: &str, config: &Config) -> Result<(), Exception> {
     let data = read(file_path).map_err(|e| {
-        Exception::Program(BaseException::new(
-            "Failed to read byte code file.".to_string(),
-            Some(Box::new(e.into())),
+        Exception::Program(BaseException::caused_by(
+            "Failed to read byte code file.",
+            e,
         ))
     })?;
 
     let mut processor = processor::Processor::new(config.clone());
 
     processor.load(&data).map_err(|e| {
-        Exception::Program(BaseException::new(
-            "Failed to load byte code file.".to_string(),
-            Some(Box::new(e)),
+        Exception::Program(BaseException::caused_by(
+            "Failed to load byte code file.",
+            e,
         ))
     })?;
 
-    processor.run().map_err(|e| {
-        Exception::Program(BaseException::new(
-            "Failed to run program.".to_string(),
-            Some(Box::new(e)),
-        ))
-    })
+    processor
+        .run()
+        .map_err(|e| Exception::Program(BaseException::caused_by("Failed to run program.", e)))
 }
 
 fn main() {
-    match start_up() {
-        Ok(_) => (),
-        Err(exception) => {
-            println!("Startup error: {}", exception);
-            return;
-        }
+    if let Err(e) = start_up() {
+        println!("Startup error: {}", e);
+        return;
     }
 
     let config = match config() {
         Ok(config) => config,
-        Err(exception) => {
-            println!("Configuration error: {}", exception);
+        Err(e) => {
+            println!("Configuration error: {}", e);
             return;
         }
     };
 
     let args: Vec<String> = env::args().collect();
-    let command = match args.get(1) {
-        Some(command) => command,
-        None => {
-            println!("No command provided. {}", constants::HELP_USAGE);
-            return;
-        }
+
+    let Some(command) = args.get(1) else {
+        println!("No command provided. {}", constants::HELP_USAGE);
+        return;
     };
-    let file_path = match args.get(2) {
-        Some(file_path) => file_path,
-        None => {
-            println!("No file path provided. {}", constants::HELP_USAGE);
+    let Some(file_path) = args.get(2) else {
+        println!("No file path provided. {}", constants::HELP_USAGE);
+        return;
+    };
+
+    let result = match command.as_str() {
+        "build" => build(file_path, &config),
+        "run" => run(file_path, &config),
+        other => {
+            println!("Unknown command: {}. {}", other, constants::HELP_USAGE);
             return;
         }
     };
 
-    match command.as_str() {
-        "build" => match build(file_path, &config) {
-            Ok(_) => (),
-            Err(exception) => println!("Build error: {}", exception),
-        },
-        "run" => match run(file_path, &config) {
-            Ok(_) => (),
-            Err(exception) => println!("Run error: {}", exception),
-        },
-        unexpected_command => println!(
-            "Unknown command: {}. {}",
-            unexpected_command,
-            constants::HELP_USAGE
-        ),
+    if let Err(e) = result {
+        println!("{} error: {}", command, e);
     }
 }

@@ -205,9 +205,8 @@ impl Assembler {
             Err(error) => {
                 let message = format!("Failed to parse number from lexeme '{}'.", previous_lexeme);
                 let _ = self.error_at_current(&message);
-                Err(Exception::Assembler(BaseException::new(
-                    message,
-                    Some(Box::new(error.into())),
+                Err(Exception::Assembler(BaseException::caused_by(
+                    message, error,
                 )))
             }
         }

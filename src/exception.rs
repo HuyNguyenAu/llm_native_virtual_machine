@@ -18,6 +18,11 @@ impl BaseException {
             location: format!("{}:{}:{}", caller.file(), caller.line(), caller.column()),
         }
     }
+
+    #[track_caller]
+    pub fn caused_by(message: impl Into<String>, cause: impl Into<Exception>) -> Self {
+        BaseException::new(message.into(), Some(Box::new(cause.into())))
+    }
 }
 
 impl From<Exception> for BaseException {

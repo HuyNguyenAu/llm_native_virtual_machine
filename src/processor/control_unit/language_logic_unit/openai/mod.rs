@@ -20,77 +20,64 @@ const EMBEDDINGS_ENDPOINT: &str = "v1/embeddings";
 pub struct OpenAIClient;
 
 impl OpenAIClient {
-    pub fn chat_completion(
-        request: OpenAIChatCompletionRequest,
-    ) -> Result<OpenAIChatCompletionResponse, Exception> {
-        let url = format!("{}/{}", BASE_URL, CHAT_COMPLETION_ENDPOINT);
-        let body = json::to_string(&request);
+    fn post_json<T: miniserde::Deserialize>(
+        endpoint: &str,
+        body: String,
+        error_variant: fn(BaseException) -> Exception,
+        context: &str,
+    ) -> Result<T, Exception> {
+        let url = format!("{}/{}", BASE_URL, endpoint);
         let response = post(&url).with_body(body).send().map_err(|e| {
-            Exception::OpenAIChatCompletion(BaseException::new(
-                "Failed to send chat request.".to_string(),
-                Some(Box::new(e.into())),
+            (error_variant)(BaseException::caused_by(
+                format!("Failed to send {} request.", context),
+                e,
             ))
         })?;
 
         if response.status_code != 200 {
-            return Err(Exception::OpenAIChatCompletion(BaseException::new(
+            return Err((error_variant)(BaseException::new(
                 format!(
-                    "Chat request failed with status {}: {}",
-                    response.status_code, response.reason_phrase
+                    "{} request failed with status {}: {}",
+                    context, response.status_code, response.reason_phrase
                 ),
                 None,
             )));
         }
 
         let text = response.as_str().map_err(|e| {
-            Exception::OpenAIChatCompletion(BaseException::new(
-                format!("Failed to read chat response: {}", e),
-                Some(Box::new(e.into())),
+            (error_variant)(BaseException::caused_by(
+                format!("Failed to read {} response.", context),
+                e,
             ))
         })?;
 
-        from_str::<OpenAIChatCompletionResponse>(text).map_err(|e| {
-            Exception::OpenAIChatCompletion(BaseException::new(
-                format!("Failed to deserialise chat response: {}", text),
-                Some(Box::new(e.into())),
+        from_str::<T>(text).map_err(|e| {
+            (error_variant)(BaseException::caused_by(
+                format!("Failed to deserialise {} response: {}", context, text),
+                e,
             ))
         })
+    }
+
+    pub fn chat_completion(
+        request: OpenAIChatCompletionRequest,
+    ) -> Result<OpenAIChatCompletionResponse, Exception> {
+        Self::post_json(
+            CHAT_COMPLETION_ENDPOINT,
+            json::to_string(&request),
+            Exception::OpenAIChatCompletion,
+            "chat",
+        )
     }
 
     pub fn embeddings(
         request: OpenAIEmbeddingsRequest,
     ) -> Result<OpenAIEmbeddingsResponse, Exception> {
-        let url = format!("{}/{}", BASE_URL, EMBEDDINGS_ENDPOINT);
-        let body = json::to_string(&request);
-        let response = post(&url).with_body(body).send().map_err(|e| {
-            Exception::OpenAIEmbeddings(BaseException::new(
-                "Failed to send embedding request.".to_string(),
-                Some(Box::new(e.into())),
-            ))
-        })?;
-
-        if response.status_code != 200 {
-            return Err(Exception::OpenAIEmbeddings(BaseException::new(
-                format!(
-                    "Embedding request failed with status {}.",
-                    response.status_code
-                ),
-                None,
-            )));
-        }
-
-        let text = response.as_str().map_err(|e| {
-            Exception::OpenAIEmbeddings(BaseException::new(
-                format!("Failed to read embedding response: {}", e),
-                Some(Box::new(e.into())),
-            ))
-        })?;
-
-        from_str::<OpenAIEmbeddingsResponse>(text).map_err(|e| {
-            Exception::OpenAIEmbeddings(BaseException::new(
-                format!("Failed to deserialise embedding response: {}", text),
-                Some(Box::new(e.into())),
-            ))
-        })
+        Self::post_json(
+            EMBEDDINGS_ENDPOINT,
+            json::to_string(&request),
+            Exception::OpenAIEmbeddings,
+            "embedding",
+        )
     }
 }

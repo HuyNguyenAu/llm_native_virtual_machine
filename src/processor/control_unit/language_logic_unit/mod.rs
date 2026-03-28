@@ -271,7 +271,13 @@ impl LanguageLogicUnit {
         text_model_overrides: &TextModelOverrides,
         debug_chat: bool,
     ) -> Result<String, Exception> {
-        Self::chat(micro_prompt, context, text_model, text_model_overrides, debug_chat)
+        Self::chat(
+            micro_prompt,
+            context,
+            text_model,
+            text_model_overrides,
+            debug_chat,
+        )
     }
 
     pub fn boolean(
@@ -284,7 +290,13 @@ impl LanguageLogicUnit {
         text_model_overrides: &TextModelOverrides,
         debug_chat: bool,
     ) -> Result<u32, Exception> {
-        let value = Self::string(micro_prompt, context, text_model, text_model_overrides, debug_chat)?;
+        let value = Self::string(
+            micro_prompt,
+            context,
+            text_model,
+            text_model_overrides,
+            debug_chat,
+        )?;
 
         let max_true_score = true_values
             .iter()

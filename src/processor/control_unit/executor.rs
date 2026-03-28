@@ -105,9 +105,9 @@ impl Executor {
         debug: bool,
     ) -> Result<(), Exception> {
         let file_contents = read_to_string(&instruction.file_path).map_err(|e| {
-            Exception::Executor(BaseException::new(
+            Exception::Executor(BaseException::caused_by(
                 format!("Failed to read file '{}'", instruction.file_path),
-                Some(Box::new(e.into())),
+                e,
             ))
         })?;
 
@@ -163,9 +163,9 @@ impl Executor {
         if is_true {
             let pointer =
                 usize::try_from(instruction.instruction_pointer_jump_index).map_err(|e| {
-                    Exception::Executor(BaseException::new(
-                        "Invalid branch jump index".to_string(),
-                        Some(Box::new(e.to_string().into())),
+                    Exception::Executor(BaseException::caused_by(
+                        "Invalid branch jump index",
+                        e.to_string(),
                     ))
                 })?;
             registers.set_instruction_pointer(pointer);
@@ -226,7 +226,13 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = Self::read_text(registers, instruction.source_register)?.clone();
         let context = registers.get_context();
-        let result = LanguageLogicUnit::string(&value, context, text_model, text_model_overrides, debug_chat)?;
+        let result = LanguageLogicUnit::string(
+            &value,
+            context,
+            text_model,
+            text_model_overrides,
+            debug_chat,
+        )?;
 
         crate::debug_print!(
             debug,
@@ -483,11 +489,24 @@ impl Executor {
             // I/O operations.
             Instruction::Output(i) => Self::output(registers, i, debug),
             // Generative operations.
-            Instruction::Map(i) => Self::map(registers, i, text_model, text_model_overrides, debug, debug_chat),
+            Instruction::Map(i) => Self::map(
+                registers,
+                i,
+                text_model,
+                text_model_overrides,
+                debug,
+                debug_chat,
+            ),
             // Guardrails operations.
-            Instruction::Eval(i) => {
-                Self::eval(registers, i, text_model, embedding_model, text_model_overrides, debug, debug_chat)
-            }
+            Instruction::Eval(i) => Self::eval(
+                registers,
+                i,
+                text_model,
+                embedding_model,
+                text_model_overrides,
+                debug,
+                debug_chat,
+            ),
             Instruction::Similarity(i) => Self::similarity(registers, i, embedding_model, debug),
             // Context operations.
             Instruction::ContextClear(_) => {

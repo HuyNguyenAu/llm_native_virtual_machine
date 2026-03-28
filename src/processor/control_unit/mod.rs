@@ -31,9 +31,9 @@ impl ControlUnit {
 
         for (i, slot) in buffer.iter_mut().enumerate() {
             *slot = *self.memory.read(ip + i).map_err(|e| {
-                Exception::ControlUnit(BaseException::new(
+                Exception::ControlUnit(BaseException::caused_by(
                     format!("Failed to read instruction at {}", ip + i),
-                    Some(Box::new(e)),
+                    e,
                 ))
             })?;
         }
@@ -50,25 +50,22 @@ impl ControlUnit {
         })?;
 
         u32::from_be_bytes(*pointer_bytes).try_into().map_err(|e| {
-            Exception::ControlUnit(BaseException::new(
+            Exception::ControlUnit(BaseException::caused_by(
                 format!("Invalid header pointer value at index {}", index),
-                Some(Box::new(format!("{}", e).into())),
+                format!("{}", e),
             ))
         })
     }
 
     pub fn load(&mut self, byte_code: &[[u8; 4]]) -> Result<(), Exception> {
         let instruction_section_pointer = self.header_pointer(0, byte_code).map_err(|e| {
-            Exception::ControlUnit(BaseException::new(
-                "Invalid instruction section pointer".to_string(),
-                Some(Box::new(e)),
+            Exception::ControlUnit(BaseException::caused_by(
+                "Invalid instruction section pointer",
+                e,
             ))
         })?;
         let data_section_pointer = self.header_pointer(1, byte_code).map_err(|e| {
-            Exception::ControlUnit(BaseException::new(
-                "Invalid data section pointer".to_string(),
-                Some(Box::new(e)),
-            ))
+            Exception::ControlUnit(BaseException::caused_by("Invalid data section pointer", e))
         })?;
 
         self.memory.load(byte_code);
@@ -88,10 +85,7 @@ impl ControlUnit {
         }
 
         let instruction_bytes = self.read_instruction().map_err(|e| {
-            Exception::ControlUnit(BaseException::new(
-                "Failed to fetch instruction".to_string(),
-                Some(Box::new(e)),
-            ))
+            Exception::ControlUnit(BaseException::caused_by("Failed to fetch instruction", e))
         })?;
 
         self.registers.set_instruction(Some(instruction_bytes));
@@ -109,10 +103,7 @@ impl ControlUnit {
         })?;
 
         Decoder::decode(&self.memory, &self.registers, bytes).map_err(|e| {
-            Exception::ControlUnit(BaseException::new(
-                "Failed to decode instruction".to_string(),
-                Some(Box::new(e)),
-            ))
+            Exception::ControlUnit(BaseException::caused_by("Failed to decode instruction", e))
         })
     }
 
@@ -136,10 +127,7 @@ impl ControlUnit {
             debug_chat,
         )
         .map_err(|e| {
-            Exception::ControlUnit(BaseException::new(
-                "Failed to execute instruction".to_string(),
-                Some(Box::new(e)),
-            ))
+            Exception::ControlUnit(BaseException::caused_by("Failed to execute instruction", e))
         })
     }
 }

@@ -143,7 +143,7 @@ There are 32 general-purpose registers, named X1 to X32. These registers can hol
 
 The context stack is a FILO (First In, Last Out) structure that holds a sequence of messages that the LPU uses to maintain context across multiple instructions. When you push a register onto the context stack, its content is added to the bottom of the stack as a message. When you pop from the context stack, the bottom message is removed and stored in a register. The context stack can be refined during the lifetime of the program, which allows remaining relevant information while discarding irrelevant details.
 
-The instructions `snp`, `rst`, `psh`, `pop`, and `drp` are used to manage the context stack. Whilst `mrf`, `prj`, `dst`, `cor`, and `aud` takes a source register and operates using the context stack as context/previous input. The result of these operations are stored in a destination register.
+The instructions `SNP`, `RST`, `PSH`, `POP`, and `DRP` are used to manage the context stack. Whilst `MAP` is used to change the form of the source register, and `EVAL` takes the question/query from the source register and evaluates it as a boolean question, both of these instructions use the context stack previous history. This means that you can refine and manage the context stack to improve performance for the `MAP` and `EVAL` instructions, which is especially important when working with smaller models that have less attention capacity.
 
 ## Instruction Terminology
 

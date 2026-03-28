@@ -222,6 +222,11 @@ Some tips for working with smaller models:
 
    # When true, output excuted instructions and their results.
    DEBUG_RUN=false
+
+   # LFM2-2.6B recommended parameters.
+   TEXT_MODEL_TEMPERATURE=0.3 
+   TEXT_MODEL_MIN_P=0.15
+   TEXT_MODEL_REPEAT_PENALTY=1.05
    ```
 
 ### With Embeddings Model (Recommended)

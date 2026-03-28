@@ -123,10 +123,13 @@ impl From<ParseIntError> for Exception {
 impl fmt::Display for Exception {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let base = self.inner();
+
         write!(f, "[{}] {}", base.location, base.message)?;
+
         if let Some(inner) = &base.inner_exception {
             write!(f, "\n  Caused by: {}", inner)?;
         }
+
         Ok(())
     }
 }

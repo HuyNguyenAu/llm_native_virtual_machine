@@ -95,7 +95,7 @@ fn build(file_path: &str, config: &Config) -> Result<(), Exception> {
     let byte_code = compiler.assemble().map_err(|e| {
         Exception::Program(BaseException::caused_by(
             "Failed to assemble source file.",
-            e.to_string(),
+            e,
         ))
     })?;
 
@@ -189,6 +189,6 @@ fn main() {
     };
 
     if let Err(e) = result {
-        println!("{} error: {}", command, e);
+        println!("Exception: {}", e);
     }
 }

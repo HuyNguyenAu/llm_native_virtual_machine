@@ -3,35 +3,35 @@
 ; Output: Compliance result and identified non-compliant sections if applicable.
 
 ; Load the contract draft and the relevant GDPR article for analysis.
-LF  X1, "examples/data/msa_draft_v2.txt"
-LF  X2, "examples/data/gdpr_article_6.txt"
+LF   X1, "examples/data/msa_draft_v2.txt"
+LF   X2, "examples/data/gdpr_article_6.txt"
 
-LS  X3, "GDPR Article 6:"
-PSH X3
-PSH X2              ; Push the GDPR article onto the context stack for reference.
+LS   X3, "Contract draft:"
+PSH  X3
+PSH  X1             ; Push the contract draft onto the context stack for processing.
 
-LS  X3, "Contract draft:"
-PSH X3
-PSH X1              ; Push the contract draft onto the context stack for processing.
+LS   X3, "GDPR Article 6:"
+PSH  X3
+PSH  X2             ; Push the GDPR article onto the context stack for reference.
 
 ; Does the contract draft comply with GDPR Article 6 standards?
-LS  X3, "Does the contract draft comply with GDPR Article 6 standards above?"
-AUD X4, X3          ; Audit the contract draft against GDPR Article 6.
+LS   X3, "Are there any compliance issues with the contract draft sections based on GDPR Article 6?"
+EVAL X4, X3         ; Audit the contract draft against GDPR Article 6.
 
-LI  X3, 100         ; Audit will return 100 if the contract is fully compliant with GDPR Article 6.
-BGE X4, X3, PASS
+LI   X3, 0          ; Audit will return 100 if the contract is not compliant, otherwise it will return a score equal to 0.
+BEQ  X4, X3, PASS
 
 ; Identify specific sections of the contract draft that do not comply with GDPR Article 6.
-LS  X3, "Why is the contract draft not compliant with GDPR Article 6?"
-COR X5, X2
+LS   X3, "Why is the contract draft sections not compliant with GDPR Article 6?"
+MAP  X5, X3
 
-LS  X3, "VIOLATIONS FOUND:"
-OUT X3
-OUT X5
+LS   X3, "VIOLATIONS FOUND:"
+OUT  X3
+OUT  X5
 EXIT
 
 PASS:
-LS  X3, "NO VIOLATIONS FOUND"
-OUT X3
+LS   X3, "NO VIOLATIONS FOUND"
+OUT  X3
 EXIT
 

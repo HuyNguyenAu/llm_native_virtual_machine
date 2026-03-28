@@ -6,7 +6,11 @@ use crate::{
     processor::{
         control_unit::{
             instruction::{
-                BranchInstruction, BranchType, ContextPopInstruction, ContextPushInstruction, ContextRestoreInstruction, ContextSetRoleInstruction, ContextSnapshotInstruction, DecrementInstruction, EvalInstruction, Instruction, LoadFileInstruction, LoadImmediateInstruction, LoadStringInstruction, MapInstruction, MoveInstruction, OutputInstruction, SimilarityInstruction
+                BranchInstruction, BranchType, ContextPopInstruction, ContextPushInstruction,
+                ContextRestoreInstruction, ContextSetRoleInstruction, ContextSnapshotInstruction,
+                DecrementInstruction, EvalInstruction, Instruction, LoadFileInstruction,
+                LoadImmediateInstruction, LoadStringInstruction, MapInstruction, MoveInstruction,
+                OutputInstruction, SimilarityInstruction,
             },
             language_logic_unit::LanguageLogicUnit,
         },

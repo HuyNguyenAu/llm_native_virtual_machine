@@ -474,25 +474,6 @@ impl Assembler {
         Ok(())
     }
 
-    fn no_register_string(
-        &mut self,
-        token_type: &TokenType,
-        op_code: OpCode,
-    ) -> Result<(), Exception> {
-        self.validate_op_code(op_code)?;
-        self.consume(token_type, &format!("Expected '{:?}' keyword.", token_type))?;
-
-        let string = self.string("Expected string after keyword.")?;
-
-        let pointer = self.emit_string(&string)?;
-
-        self.emit_opcode(op_code);
-        self.emit_number(pointer);
-        self.emit_padding(2);
-
-        Ok(())
-    }
-
     fn single_register(
         &mut self,
         token_type: &TokenType,
@@ -576,7 +557,7 @@ impl Assembler {
         self.emit_opcode(op_code);
         self.emit_number(destination_register);
         self.emit_number(source_register);
-        self.emit_string(&string);
+        self.emit_string(&string)?;
 
         Ok(())
     }

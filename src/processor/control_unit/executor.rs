@@ -368,7 +368,9 @@ impl Executor {
         instruction: &MoveContextInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = registers.get_context(instruction.source_context_register)?.to_vec();
+        let value = registers
+            .get_context(instruction.source_context_register)?
+            .to_vec();
         registers.set_context(instruction.destination_context_register, &value)?;
 
         crate::debug_print!(

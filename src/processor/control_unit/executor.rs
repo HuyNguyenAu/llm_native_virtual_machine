@@ -1,7 +1,7 @@
 use std::fs::read_to_string;
 
 use crate::{
-    config::TextModelOverrides,
+    config::{Config, TextModelOverrides},
     exception::{BaseException, Exception},
     processor::{
         control_unit::{
@@ -470,55 +470,51 @@ impl Executor {
         memory: &mut Memory,
         registers: &mut Registers,
         instruction: &Instruction,
-        text_model: &str,
-        embedding_model: &str,
-        text_model_overrides: &TextModelOverrides,
-        debug: bool,
-        debug_chat: bool,
+        config: &Config,
     ) -> Result<(), Exception> {
         match instruction {
             // Data movement operations.
-            Instruction::LoadString(i) => Self::load_string(registers, i, debug),
-            Instruction::LoadImmediate(i) => Self::load_immediate(registers, i, debug),
-            Instruction::LoadContent(i) => Self::load_content(registers, i, debug),
-            Instruction::Move(i) => Self::mov(registers, i, debug),
+            Instruction::LoadString(i) => Self::load_string(registers, i, config.debug_run),
+            Instruction::LoadImmediate(i) => Self::load_immediate(registers, i, config.debug_run),
+            Instruction::LoadContent(i) => Self::load_content(registers, i, config.debug_run),
+            Instruction::Move(i) => Self::mov(registers, i, config.debug_run),
             // Control flow operations.
-            Instruction::Branch(i) => Self::branch(registers, i, debug),
+            Instruction::Branch(i) => Self::branch(registers, i, config.debug_run),
             Instruction::Exit(_) => {
-                Self::exit(memory, registers, debug);
+                Self::exit(memory, registers, config.debug_run);
                 Ok(())
             }
             // I/O operations.
-            Instruction::Print(i) => Self::print(registers, i, debug),
-            Instruction::PrintLine(i) => Self::print_line(registers, i, debug),
-            Instruction::PrintContext(i) => Self::print_context(registers, &i, debug),
+            Instruction::Print(i) => Self::print(registers, i, config.debug_run),
+            Instruction::PrintLine(i) => Self::print_line(registers, i, config.debug_run),
+            Instruction::PrintContext(i) => Self::print_context(registers, i, config.debug_run),
             // Generative operations.
             Instruction::Inference(i) => Self::inference(
                 registers,
                 i,
-                text_model,
-                text_model_overrides,
-                debug,
-                debug_chat,
+                &config.text_model,
+                &config.text_model_overrides,
+                config.debug_run,
+                config.debug_chat,
             ),
             // Guardrails operations.
             Instruction::Evaluate(i) => Self::evaluate(
                 registers,
                 i,
-                text_model,
-                embedding_model,
-                text_model_overrides,
-                debug,
-                debug_chat,
+                &config.text_model,
+                &config.embedding_model,
+                &config.text_model_overrides,
+                config.debug_run,
+                config.debug_chat,
             ),
-            Instruction::Similarity(i) => Self::similarity(registers, i, embedding_model, debug),
+            Instruction::Similarity(i) => Self::similarity(registers, i, &config.embedding_model, config.debug_run),
             // Context operations.
-            Instruction::ContextPush(i) => Self::context_push(registers, i, debug),
-            Instruction::ContextPop(i) => Self::context_pop(registers, i, debug),
-            Instruction::ContextDrop(i) => Self::context_drop(registers, i, debug),
-            Instruction::MoveContext(i) => Self::move_context(registers, i, debug),
+            Instruction::ContextPush(i) => Self::context_push(registers, i, config.debug_run),
+            Instruction::ContextPop(i) => Self::context_pop(registers, i, config.debug_run),
+            Instruction::ContextDrop(i) => Self::context_drop(registers, i, config.debug_run),
+            Instruction::MoveContext(i) => Self::move_context(registers, i, config.debug_run),
             // Arithmetic operations.
-            Instruction::SubtractImmediate(i) => Self::subtract_immediate(registers, i, debug),
+            Instruction::SubtractImmediate(i) => Self::subtract_immediate(registers, i, config.debug_run),
         }
     }
 }

@@ -12,9 +12,12 @@
 ; X7: Current light intensity information extracted from sensor data
 ; X8: Classified category of light feedback
 ; X9: Classified intensity of light feedback
-; X31: Retry limit counter for adjustments
-; C1: Context stack for processing sensor data
-; C10: Context stack for processing user feedback and building feedback contexts
+; X10: Adjusted temperature based on feedback
+; X11: Validation result for adjusted temperature
+; X12: Adjusted light intensity based on feedback
+; X13: Output JSON containing the final adjusted temperature and light intensity
+; C1: Context stack for sensor data
+; C10: Context stack for processing feedback and adjustments
 ; C30: Saved context for temperature feedback
 ; C31: Saved context for light feedback
 

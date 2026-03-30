@@ -169,6 +169,18 @@ LS   X3, "Failed to adjust the room's light intensity within the 5 attempts afte
 PLN  X3
 ```
 
+## Future Directions
+
+In a way, this project is essentially a low-level language for Agents. Frameworks like LangChain or AutoGPT are great for quickly building agents and applications, but they lack the flexibility and control that this language can provide.
+
+The difference is comparable to Machine Code vs Web Framework. Here we have a fundermental execution engine or model that has the following distinct advantages:
+
+1. Abstraction: We operate on atomic instructions. If you want to move data, you use `MV`. If you want to check a condition, you `EVAL` then `BEQ`. There is no black box logic.
+2. Context/Memory Management: We have context registers which allow for fine-grained control over what information is relevant for each instruction.
+3. Control Flow: The LLM only handles data processing and generation, while the control flow is handled by the assembler. The decision of where to go next is handled by branching. This is more robust since the logic of the program is not inside a prompt.
+
+A dream state for this project would be to have other frameworks and languages compile down to this language to provide a transparent, auditable sequence of operations that can be optimised for cost and speed.
+
 ## Registers
 
 There are 33 general-purpose registers, named X0 to X32. These registers can hold text and positive numbers (currently working on support images and audio).

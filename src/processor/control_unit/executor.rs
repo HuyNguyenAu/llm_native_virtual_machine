@@ -8,10 +8,9 @@ use crate::{
         control_unit::{
             instruction::{
                 BranchInstruction, BranchType, ContextPopInstruction, ContextPushInstruction,
-                ContextRestoreInstruction, ContextSetRoleInstruction, ContextSnapshotInstruction,
-                DecrementInstruction, EvalInstruction, Instruction, LoadFileInstruction,
-                LoadImmediateInstruction, LoadStringInstruction, MapInstruction, MoveInstruction,
-                OutputInstruction, SimilarityInstruction,
+                DecrementInstruction, EvalulateInstruction, InferenceInstruction, Instruction,
+                LoadContentInstruction, LoadImmediateInstruction, LoadStringInstruction,
+                MoveInstruction, OutputInstruction, SimilarityInstruction,
             },
             language_logic_unit::LanguageLogicUnit,
         },
@@ -99,14 +98,14 @@ impl Executor {
         Ok(())
     }
 
-    fn load_file(
+    fn load_content(
         registers: &mut Registers,
-        instruction: &LoadFileInstruction,
+        instruction: &LoadContentInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let file_contents = read_to_string(&instruction.file_path).map_err(|e| {
+        let file_contents = read_to_string(&instruction.path).map_err(|e| {
             Exception::Executor(BaseException::caused_by(
-                format!("Failed to read file '{}'", instruction.file_path),
+                format!("Failed to read file '{}'", instruction.path),
                 e,
             ))
         })?;
@@ -118,7 +117,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed LF  : r{} = {:?}",
+            "Executed LC  : r{} = {:?}",
             instruction.destination_register,
             file_contents
         );
@@ -216,16 +215,16 @@ impl Executor {
         Ok(())
     }
 
-    fn map(
+    fn inference(
         registers: &mut Registers,
-        instruction: &MapInstruction,
+        instruction: &InferenceInstruction,
         text_model: &str,
         text_model_overrides: &TextModelOverrides,
         debug: bool,
         debug_chat: bool,
     ) -> Result<(), Exception> {
         let value = Self::read_text(registers, instruction.source_register)?.clone();
-        let context = registers.get_context();
+        let context = registers.get_context(instruction.context_register)?;
         let result = LanguageLogicUnit::string(
             &value,
             context,
@@ -236,7 +235,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed MAP : r{} = '{:?}'",
+            "Executed INF : r{} = '{:?}'",
             instruction.destination_register,
             result
         );
@@ -244,9 +243,9 @@ impl Executor {
         registers.set_register(instruction.destination_register, &Value::Text(result))
     }
 
-    fn eval(
+    fn evaluate(
         registers: &mut Registers,
-        instruction: &EvalInstruction,
+        instruction: &EvalulateInstruction,
         text_model: &str,
         embedding_model: &str,
         text_model_overrides: &TextModelOverrides,
@@ -260,7 +259,7 @@ impl Executor {
         );
         let true_values = vec!["YES", "TRUE"];
         let false_values = vec!["NO", "FALSE"];
-        let context = registers.get_context();
+        let context = registers.get_context(instruction.context_register)?;
 
         let result = LanguageLogicUnit::boolean(
             &micro_prompt,
@@ -306,46 +305,6 @@ impl Executor {
         registers.set_register(instruction.destination_register, &Value::Number(result))
     }
 
-    fn context_clear(registers: &mut Registers, debug: bool) {
-        registers.clear_context();
-
-        crate::debug_print!(debug, "Executed CLR : Cleared context stack.");
-    }
-
-    fn context_snapshot(
-        registers: &mut Registers,
-        instruction: &ContextSnapshotInstruction,
-        debug: bool,
-    ) -> Result<(), Exception> {
-        let snapshot = registers.snapshot_context();
-        registers.set_register(instruction.destination_register, &Value::Text(snapshot))?;
-
-        crate::debug_print!(
-            debug,
-            "Executed SNP : Snapshotted context stack into r{}.",
-            instruction.destination_register
-        );
-
-        Ok(())
-    }
-
-    fn context_restore(
-        registers: &mut Registers,
-        instruction: &ContextRestoreInstruction,
-        debug: bool,
-    ) -> Result<(), Exception> {
-        let snapshot = Self::read_text(registers, instruction.source_register)?.clone();
-        registers.restore_context(&snapshot)?;
-
-        crate::debug_print!(
-            debug,
-            "Executed RST : Restored context stack from snapshot in r{}.",
-            instruction.source_register
-        );
-
-        Ok(())
-    }
-
     fn context_push(
         registers: &mut Registers,
         instruction: &ContextPushInstruction,
@@ -364,21 +323,17 @@ impl Executor {
                 )));
             }
         };
-        let role = registers
-            .get_context_role()
-            .unwrap_or(roles::USER_ROLE.to_string());
 
-        registers.push_context(ContextMessage::new(&role, &value));
+        registers.push_context(
+            ContextMessage::new(&instruction.role, &value),
+            instruction.destination_context_register,
+        )?;
 
-        crate::debug_print!(
-            debug && registers.get_context_role().is_none(),
-            "Defaulting context role to '{}' for CONTEXT_PUSH since no role is currently set.",
-            roles::USER_ROLE
-        );
         crate::debug_print!(
             debug,
-            "Executed PSH : Pushed value from r{} onto context stack.",
-            instruction.source_register
+            "Executed PSH : Pushed value from r{} onto context stack with role '{}'.",
+            instruction.source_register,
+            instruction.role
         );
 
         Ok(())
@@ -389,12 +344,8 @@ impl Executor {
         instruction: &ContextPopInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let context = registers.pop_context().ok_or_else(|| {
-            Exception::Executor(BaseException::new(
-                "Cannot pop from empty context stack.".to_string(),
-                None,
-            ))
-        })?;
+        let context = registers
+            .pop_context(instruction.source_context_register)?;
 
         registers.set_register(
             instruction.destination_register,
@@ -407,30 +358,11 @@ impl Executor {
     }
 
     fn context_drop(registers: &mut Registers, debug: bool) -> Result<(), Exception> {
-        registers.pop_context().ok_or_else(|| {
-            Exception::Executor(BaseException::new(
-                "Cannot drop from empty context stack.".to_string(),
-                None,
-            ))
-        })?;
+        registers.pop_context(0)?;
 
         crate::debug_print!(debug, "Executed DRP : Dropped value from context stack.",);
 
         Ok(())
-    }
-
-    fn context_set_role(
-        registers: &mut Registers,
-        instruction: &ContextSetRoleInstruction,
-        debug: bool,
-    ) {
-        registers.set_context_role(&instruction.role);
-
-        crate::debug_print!(
-            debug,
-            "Executed SRL : Set context role to '{}'.",
-            instruction.role
-        );
     }
 
     fn decrement(
@@ -478,7 +410,7 @@ impl Executor {
             // Data movement operations.
             Instruction::LoadString(i) => Self::load_string(registers, i, debug),
             Instruction::LoadImmediate(i) => Self::load_immediate(registers, i, debug),
-            Instruction::LoadFile(i) => Self::load_file(registers, i, debug),
+            Instruction::LoadContent(i) => Self::load_content(registers, i, debug),
             Instruction::Move(i) => Self::mov(registers, i, debug),
             // Control flow operations.
             Instruction::Branch(i) => Self::branch(registers, i, debug),
@@ -489,7 +421,7 @@ impl Executor {
             // I/O operations.
             Instruction::Output(i) => Self::output(registers, i, debug),
             // Generative operations.
-            Instruction::Map(i) => Self::map(
+            Instruction::Inference(i) => Self::inference(
                 registers,
                 i,
                 text_model,
@@ -498,7 +430,7 @@ impl Executor {
                 debug_chat,
             ),
             // Guardrails operations.
-            Instruction::Eval(i) => Self::eval(
+            Instruction::Evaluate(i) => Self::evaluate(
                 registers,
                 i,
                 text_model,
@@ -509,19 +441,9 @@ impl Executor {
             ),
             Instruction::Similarity(i) => Self::similarity(registers, i, embedding_model, debug),
             // Context operations.
-            Instruction::ContextClear(_) => {
-                Self::context_clear(registers, debug);
-                Ok(())
-            }
-            Instruction::ContextSnapshot(i) => Self::context_snapshot(registers, i, debug),
-            Instruction::ContextRestore(i) => Self::context_restore(registers, i, debug),
             Instruction::ContextPush(i) => Self::context_push(registers, i, debug),
             Instruction::ContextPop(i) => Self::context_pop(registers, i, debug),
             Instruction::ContextDrop(_) => Self::context_drop(registers, debug),
-            Instruction::ContextSetRole(i) => {
-                Self::context_set_role(registers, i, debug);
-                Ok(())
-            }
             // Misc operations.
             Instruction::Decrement(i) => Self::decrement(registers, i, debug),
         }

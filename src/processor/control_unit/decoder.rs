@@ -3,12 +3,10 @@ use crate::{
     exception::{BaseException, Exception},
     processor::{
         control_unit::instruction::{
-            BranchInstruction, BranchType, ContextClearInstruction, ContextDropInstruction,
-            ContextPopInstruction, ContextPushInstruction, ContextRestoreInstruction,
-            ContextSetRoleInstruction, ContextSnapshotInstruction, DecrementInstruction,
-            EvalInstruction, ExitInstruction, Instruction, LoadFileInstruction,
-            LoadImmediateInstruction, LoadStringInstruction, MapInstruction, MoveInstruction,
-            OutputInstruction, SimilarityInstruction,
+            BranchInstruction, BranchType, ContextDropInstruction, ContextPopInstruction,
+            ContextPushInstruction, DecrementInstruction, EvalulateInstruction, ExitInstruction,
+            InferenceInstruction, Instruction, LoadContentInstruction, LoadImmediateInstruction,
+            LoadStringInstruction, MoveInstruction, OutputInstruction, SimilarityInstruction,
         },
         memory::Memory,
         registers::Registers,
@@ -90,12 +88,12 @@ impl Decoder {
         let register = u32::from_be_bytes(instruction_bytes[1]);
 
         match op_code {
-            OpCode::LoadString | OpCode::LoadFile => {
-                let pointer = u32::from_be_bytes(instruction_bytes[2]) as usize;
+            OpCode::LoadString | OpCode::LoadContent => {
+                let string_pointer = u32::from_be_bytes(instruction_bytes[2]) as usize;
                 let string = Self::string(
                     memory,
                     registers,
-                    pointer,
+                    string_pointer,
                     &format!("Decoding string for {:?}", op_code),
                 )?;
 
@@ -104,9 +102,9 @@ impl Decoder {
                         destination_register: register,
                         value: string,
                     })),
-                    OpCode::LoadFile => Ok(Instruction::LoadFile(LoadFileInstruction {
+                    OpCode::LoadContent => Ok(Instruction::LoadContent(LoadContentInstruction {
                         destination_register: register,
-                        file_path: string,
+                        path: string,
                     })),
                     _ => unreachable!(),
                 }
@@ -173,41 +171,10 @@ impl Decoder {
             // Control flow.
             OpCode::Exit => Ok(Instruction::Exit(ExitInstruction)),
             // Context operations.
-            OpCode::ContextClear => Ok(Instruction::ContextClear(ContextClearInstruction)),
             OpCode::ContextDrop => Ok(Instruction::ContextDrop(ContextDropInstruction)),
             _ => Err(Exception::Decoder(BaseException::new(
                 format!(
                     "Failed to decode zero-register instruction: invalid opcode '{:?}'.",
-                    op_code
-                ),
-                None,
-            ))),
-        }
-    }
-
-    fn no_register_string(
-        memory: &Memory,
-        registers: &Registers,
-        op_code: OpCode,
-        instruction_bytes: [[u8; 4]; 4],
-    ) -> Result<Instruction, Exception> {
-        Self::expect_not_nop(op_code)?;
-
-        let pointer = u32::from_be_bytes(instruction_bytes[1]) as usize;
-        let string = Self::string(
-            memory,
-            registers,
-            pointer,
-            &format!("Decoding string for {:?}", op_code),
-        )?;
-
-        match op_code {
-            OpCode::ContextSetRole => Ok(Instruction::ContextSetRole(ContextSetRoleInstruction {
-                role: string,
-            })),
-            _ => Err(Exception::Decoder(BaseException::new(
-                format!(
-                    "Failed to decode zero-register string instruction: invalid opcode '{:?}'.",
                     op_code
                 ),
                 None,
@@ -227,21 +194,6 @@ impl Decoder {
             // I/O.
             OpCode::Out => Ok(Instruction::Output(OutputInstruction {
                 source_register: register,
-            })),
-            // Context operations.
-            OpCode::ContextSnapshot => {
-                Ok(Instruction::ContextSnapshot(ContextSnapshotInstruction {
-                    destination_register: register,
-                }))
-            }
-            OpCode::ContextRestore => Ok(Instruction::ContextRestore(ContextRestoreInstruction {
-                source_register: register,
-            })),
-            OpCode::ContextPush => Ok(Instruction::ContextPush(ContextPushInstruction {
-                source_register: register,
-            })),
-            OpCode::ContextPop => Ok(Instruction::ContextPop(ContextPopInstruction {
-                destination_register: register,
             })),
             _ => Err(Exception::Decoder(BaseException::new(
                 format!(
@@ -263,17 +215,48 @@ impl Decoder {
         let source_register = u32::from_be_bytes(instruction_bytes[2]);
 
         match op_code {
-            OpCode::Map => Ok(Instruction::Map(MapInstruction {
+            OpCode::ContextPop => Ok(Instruction::ContextPop(ContextPopInstruction {
                 destination_register,
-                source_register,
-            })),
-            OpCode::Eval => Ok(Instruction::Eval(EvalInstruction {
-                destination_register,
-                source_register,
+                source_context_register: source_register,
             })),
             _ => Err(Exception::Decoder(BaseException::new(
                 format!(
                     "Failed to decode double-register instruction: invalid opcode '{:?}'.",
+                    op_code
+                ),
+                None,
+            ))),
+        }
+    }
+
+    fn double_register_string(
+        memory: &Memory,
+        registers: &Registers,
+        op_code: OpCode,
+        instruction_bytes: [[u8; 4]; 4],
+    ) -> Result<Instruction, Exception> {
+        Self::expect_not_nop(op_code)?;
+
+        let destination_context_register = u32::from_be_bytes(instruction_bytes[1]);
+        let source_register = u32::from_be_bytes(instruction_bytes[2]);
+        let string_pointer = u32::from_be_bytes(instruction_bytes[3]) as usize;
+
+        let string = Self::string(
+            memory,
+            registers,
+            string_pointer,
+            &format!("Decoding role string for {:?}", op_code),
+        )?;
+
+        match op_code {
+            OpCode::ContextPush => Ok(Instruction::ContextPush(ContextPushInstruction {
+                destination_context_register,
+                source_register,
+                role: string,
+            })),
+            _ => Err(Exception::Decoder(BaseException::new(
+                format!(
+                    "Failed to decode double-register-string instruction: invalid opcode '{:?}'.",
                     op_code
                 ),
                 None,
@@ -292,6 +275,16 @@ impl Decoder {
         let source_register_2 = u32::from_be_bytes(instruction_bytes[3]);
 
         match op_code {
+            OpCode::Inference => Ok(Instruction::Inference(InferenceInstruction {
+                destination_register,
+                source_register: source_register_1,
+                context_register: source_register_2,
+            })),
+            OpCode::Evaluate => Ok(Instruction::Evaluate(EvalulateInstruction {
+                destination_register,
+                source_register: source_register_1,
+                context_register: source_register_2,
+            })),
             OpCode::Similarity => Ok(Instruction::Similarity(SimilarityInstruction {
                 destination_register,
                 source_register_1,
@@ -316,7 +309,7 @@ impl Decoder {
 
         match op_code {
             // Data movement.
-            OpCode::LoadString | OpCode::LoadImmediate | OpCode::LoadFile | OpCode::Move => {
+            OpCode::LoadString | OpCode::LoadImmediate | OpCode::LoadContent | OpCode::Move => {
                 Self::immediate(memory, registers, op_code, instruction_bytes)
             }
             // Control flow.
@@ -329,17 +322,15 @@ impl Decoder {
             // I/O.
             OpCode::Out => Self::single_register(op_code, instruction_bytes),
             // Context operations.
-            OpCode::ContextClear | OpCode::ContextDrop => Self::no_register(op_code),
-            OpCode::ContextSnapshot
-            | OpCode::ContextRestore
-            | OpCode::ContextPush
-            | OpCode::ContextPop => Self::single_register(op_code, instruction_bytes),
-            OpCode::ContextSetRole => {
-                Self::no_register_string(memory, registers, op_code, instruction_bytes)
+            OpCode::ContextPush => {
+                Self::double_register_string(memory, registers, op_code, instruction_bytes)
             }
+            OpCode::ContextPop => Self::double_register(op_code, instruction_bytes),
+            OpCode::ContextDrop => Self::no_register(op_code),
             // Generative, cognitive, and guardrails operations.
-            OpCode::Map | OpCode::Eval => Self::double_register(op_code, instruction_bytes),
-            OpCode::Similarity => Self::triple_register(op_code, instruction_bytes),
+            OpCode::Inference | OpCode::Evaluate | OpCode::Similarity => {
+                Self::triple_register(op_code, instruction_bytes)
+            }
             // Misc operations.
             OpCode::Decrement => Self::immediate(memory, registers, op_code, instruction_bytes),
             OpCode::NoOp => Err(Exception::Decoder(BaseException::new(

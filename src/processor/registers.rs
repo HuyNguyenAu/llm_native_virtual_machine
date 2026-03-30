@@ -70,7 +70,7 @@ impl Registers {
             )));
         }
 
-        Ok(idx - 1)
+        Ok(idx)
     }
 
     pub fn get_register(&self, register_number: u32) -> Result<&Value, Exception> {

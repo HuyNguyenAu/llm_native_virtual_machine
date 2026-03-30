@@ -251,7 +251,8 @@ impl Executor {
         );
 
         if !debug {
-            println!("{:?}", context);
+            let context_json = miniserde::json::to_string(&context);
+            println!("{}", context_json);
         }
 
         Ok(())

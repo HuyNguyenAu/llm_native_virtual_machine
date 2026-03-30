@@ -10,9 +10,9 @@ pub struct LoadImmediateInstruction {
 }
 
 #[derive(Debug)]
-pub struct LoadFileInstruction {
+pub struct LoadContentInstruction {
     pub destination_register: u32,
-    pub file_path: String,
+    pub path: String,
 }
 
 #[derive(Debug)]
@@ -22,15 +22,17 @@ pub struct MoveInstruction {
 }
 
 #[derive(Debug)]
-pub struct MapInstruction {
+pub struct InferenceInstruction {
     pub destination_register: u32,
     pub source_register: u32,
+    pub context_register: u32,
 }
 
 #[derive(Debug)]
-pub struct EvalInstruction {
+pub struct EvalulateInstruction {
     pub destination_register: u32,
     pub source_register: u32,
+    pub context_register: u32,
 }
 
 #[derive(Debug)]
@@ -58,45 +60,48 @@ pub struct BranchInstruction {
 }
 
 #[derive(Debug)]
-pub struct ContextClearInstruction;
-
-#[derive(Debug)]
-pub struct ContextSnapshotInstruction {
-    pub destination_register: u32,
-}
-
-#[derive(Debug)]
-pub struct ContextRestoreInstruction {
-    pub source_register: u32,
-}
-
-#[derive(Debug)]
 pub struct ContextPushInstruction {
+    pub destination_context_register: u32,
     pub source_register: u32,
+    pub role: String,
 }
 
 #[derive(Debug)]
 pub struct ContextPopInstruction {
     pub destination_register: u32,
+    pub source_context_register: u32,
 }
 
 #[derive(Debug)]
-pub struct ContextDropInstruction;
-
-#[derive(Debug)]
-pub struct ContextSetRoleInstruction {
-    pub role: String,
+pub struct ContextDropInstruction {
+    pub source_context_register: u32,
 }
 
 #[derive(Debug)]
-pub struct DecrementInstruction {
+pub struct MoveContextInstruction {
+    pub destination_context_register: u32,
+    pub source_context_register: u32,
+}
+
+#[derive(Debug)]
+pub struct SubtractImmediateInstruction {
     pub source_register: u32,
     pub value: u32,
 }
 
 #[derive(Debug)]
-pub struct OutputInstruction {
+pub struct PrintInstruction {
     pub source_register: u32,
+}
+
+#[derive(Debug)]
+pub struct PrintLineInstruction {
+    pub source_register: u32,
+}
+
+#[derive(Debug)]
+pub struct PrintContextInstruction {
+    pub source_context_register: u32,
 }
 
 #[derive(Debug)]
@@ -107,26 +112,25 @@ pub enum Instruction {
     // Data movement.
     LoadString(LoadStringInstruction),
     LoadImmediate(LoadImmediateInstruction),
-    LoadFile(LoadFileInstruction),
+    LoadContent(LoadContentInstruction),
     Move(MoveInstruction),
     // Control flow.
     Branch(BranchInstruction),
     Exit(ExitInstruction),
     // I/O.
-    Output(OutputInstruction),
+    Print(PrintInstruction),
+    PrintLine(PrintLineInstruction),
+    PrintContext(PrintContextInstruction),
     // Generative operations.
-    Map(MapInstruction),
+    Inference(InferenceInstruction),
     // Guardrails operations.
-    Eval(EvalInstruction),
+    Evaluate(EvalulateInstruction),
     Similarity(SimilarityInstruction),
     // Context operations.
-    ContextClear(ContextClearInstruction),
-    ContextSnapshot(ContextSnapshotInstruction),
-    ContextRestore(ContextRestoreInstruction),
     ContextPush(ContextPushInstruction),
     ContextPop(ContextPopInstruction),
     ContextDrop(ContextDropInstruction),
-    ContextSetRole(ContextSetRoleInstruction),
-    // Misc.
-    Decrement(DecrementInstruction),
+    MoveContext(MoveContextInstruction),
+    // Arithmetic operations.
+    SubtractImmediate(SubtractImmediateInstruction),
 }

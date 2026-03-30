@@ -1,4 +1,4 @@
-use crate::config::TextModelOverrides;
+use crate::config::Config;
 use crate::exception::{BaseException, Exception};
 use crate::processor::control_unit::decoder::Decoder;
 use crate::processor::control_unit::executor::Executor;
@@ -110,21 +110,13 @@ impl ControlUnit {
     pub fn execute(
         &mut self,
         instruction: Instruction,
-        text_model: &str,
-        embedding_model: &str,
-        text_model_overrides: &TextModelOverrides,
-        debug: bool,
-        debug_chat: bool,
+        config: &Config,
     ) -> Result<(), Exception> {
         Executor::execute(
             &mut self.memory,
             &mut self.registers,
             &instruction,
-            text_model,
-            embedding_model,
-            text_model_overrides,
-            debug,
-            debug_chat,
+            config,
         )
         .map_err(|e| {
             Exception::ControlUnit(BaseException::caused_by("Failed to execute instruction", e))

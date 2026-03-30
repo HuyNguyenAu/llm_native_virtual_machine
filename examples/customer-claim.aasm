@@ -6,21 +6,21 @@
 LS   X1, "The package arrived, but it looks like it didn't go through a blender."
 
 LS   X2, "Customer complaint:"
-PSH  X2
-PSH  X1                              ; Push the customer's statement onto the context stack for processing.
+PSH  C1, X2, "user"
+PSH  C1, X1, "user"                 ; Push the customer's statement onto the context stack for processing.
 
 ; Assess the customer's statement to determine if it indicates a damaged package.
 LS   X2, "Is customer claiming that the package is damaged?"
-EVAL X3, X2                          ; Audit the validity of the claim.
+EVAL X3, X2, C1                     ; Audit the validity of the claim.
 
-LI  X4, 100                          ; Audit will return 0 for invalid claims and 100 for valid claims.
+LI  X4, 100                         ; Audit will return 0 for invalid claims and 100 for valid claims.
 BEQ X4, X3, DAMAGE_CLAIM
 
 ; If the claim is not valid, output an invalid statement.
 LS  X2, "Action: Route to general inquiries." 
-OUT X2
+PLN X2
 EXIT
 
 DAMAGE_CLAIM:
 LS  X2, "Action: Tagged as DAMAGE CLAIM. Route to RMA support."
-OUT X2
+PLN X2

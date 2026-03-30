@@ -170,19 +170,18 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    let Some(command) = args.get(1) else {
-        println!("No command provided. {}", constants::HELP_USAGE);
-        return;
-    };
-    let Some(file_path) = args.get(2) else {
-        println!("No file path provided. {}", constants::HELP_USAGE);
-        return;
-    };
-
-    let result = match command.as_str() {
-        "build" => build(file_path, &config),
-        "run" => run(file_path, &config),
-        other => {
+    let result = match (args.get(1).map(String::as_str), args.get(2)) {
+        (None, _) => {
+            println!("No command provided. {}", constants::HELP_USAGE);
+            return;
+        }
+        (_, None) => {
+            println!("No file path provided. {}", constants::HELP_USAGE);
+            return;
+        }
+        (Some("build"), Some(file_path)) => build(file_path, &config),
+        (Some("run"), Some(file_path)) => run(file_path, &config),
+        (Some(other), _) => {
             println!("Unknown command: {}. {}", other, constants::HELP_USAGE);
             return;
         }

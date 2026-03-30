@@ -37,23 +37,21 @@ impl ContextMessage {
 }
 
 pub struct Registers {
-    general_purpose: [Value; 32],
+    general_purpose: [Value; 33],
+    context: [Vec<ContextMessage>; 33],
     instruction_pointer: usize,
     instruction: Option<[[u8; 4]; 4]>,
     data_section_pointer: usize,
-    context: Vec<ContextMessage>,
-    context_role: Option<String>,
 }
 
 impl Registers {
     pub fn new() -> Self {
         Registers {
-            general_purpose: [const { Value::None }; 32],
+            general_purpose: [const { Value::None }; 33],
+            context: [const { Vec::new() }; 33],
             instruction_pointer: 0,
             instruction: None,
             data_section_pointer: 0,
-            context: Vec::new(),
-            context_role: None,
         }
     }
 
@@ -65,14 +63,14 @@ impl Registers {
             ))
         })?;
 
-        if !(1..=32).contains(&idx) {
+        if !(0..=32).contains(&idx) {
             return Err(Exception::Register(BaseException::new(
-                format!("Register number {} out of range (1-32).", register_number),
+                format!("Register number {} out of range (0-32).", register_number),
                 None,
             )));
         }
 
-        Ok(idx - 1)
+        Ok(idx)
     }
 
     pub fn get_register(&self, register_number: u32) -> Result<&Value, Exception> {
@@ -82,8 +80,75 @@ impl Registers {
 
     pub fn set_register(&mut self, register_number: u32, value: &Value) -> Result<(), Exception> {
         let idx = Self::to_index(register_number)?;
+
+        if idx == 0 {
+            return Err(Exception::Register(BaseException::new(
+                "Cannot write to register 0 (reserved for none value).".to_string(),
+                None,
+            )));
+        }
+
         self.general_purpose[idx] = value.clone();
         Ok(())
+    }
+
+    pub fn get_context(&self, register_number: u32) -> Result<&[ContextMessage], Exception> {
+        let idx = Self::to_index(register_number)?;
+        Ok(&self.context[idx])
+    }
+
+    pub fn set_context(
+        &mut self,
+        register_number: u32,
+        messages: &[ContextMessage],
+    ) -> Result<(), Exception> {
+        let idx = Self::to_index(register_number)?;
+
+        if idx == 0 {
+            return Err(Exception::Register(BaseException::new(
+                "Cannot write to context register 0 (reserved for empty value).".to_string(),
+                None,
+            )));
+        }
+
+        self.context[idx] = messages.to_vec();
+        Ok(())
+    }
+
+    pub fn push_context(
+        &mut self,
+        message: ContextMessage,
+        register_number: u32,
+    ) -> Result<(), Exception> {
+        let idx = Self::to_index(register_number)?;
+
+        if idx == 0 {
+            return Err(Exception::Register(BaseException::new(
+                "Cannot write to context register 0 (reserved for empty value).".to_string(),
+                None,
+            )));
+        }
+
+        self.context[idx].push(message);
+        Ok(())
+    }
+
+    pub fn pop_context(&mut self, register_number: u32) -> Result<ContextMessage, Exception> {
+        let idx = Self::to_index(register_number)?;
+
+        if idx == 0 {
+            return Err(Exception::Register(BaseException::new(
+                "Cannot read from context register 0 (reserved for empty value).".to_string(),
+                None,
+            )));
+        }
+
+        self.context[idx].pop().ok_or_else(|| {
+            Exception::Register(BaseException::new(
+                format!("Context stack for register {} is empty.", register_number),
+                None,
+            ))
+        })
     }
 
     pub fn get_instruction_pointer(&self) -> usize {
@@ -112,44 +177,5 @@ impl Registers {
 
     pub fn set_data_section_pointer(&mut self, address: usize) {
         self.data_section_pointer = address;
-    }
-
-    pub fn clear_context(&mut self) {
-        self.context.clear();
-    }
-
-    pub fn get_context(&self) -> &[ContextMessage] {
-        &self.context
-    }
-
-    pub fn snapshot_context(&self) -> String {
-        miniserde::json::to_string(&self.context)
-    }
-
-    pub fn restore_context(&mut self, snapshot: &str) -> Result<(), Exception> {
-        self.context = miniserde::json::from_str(snapshot).map_err(|e| {
-            Exception::Register(BaseException::new(
-                format!("Failed to restore context from snapshot: {}", e),
-                None,
-            ))
-        })?;
-
-        Ok(())
-    }
-
-    pub fn push_context(&mut self, message: ContextMessage) {
-        self.context.push(message);
-    }
-
-    pub fn pop_context(&mut self) -> Option<ContextMessage> {
-        self.context.pop()
-    }
-
-    pub fn get_context_role(&self) -> Option<String> {
-        self.context_role.clone()
-    }
-
-    pub fn set_context_role(&mut self, role: &str) {
-        self.context_role = Some(role.to_string());
     }
 }

@@ -20,6 +20,12 @@ mod openai;
 const SYSTEM_PROMPT: &str =
     "Provide exactly the requested output. Follow structural markers strictly.";
 
+pub struct BooleanEvalParams<'a> {
+    pub true_values: &'a [&'a str],
+    pub false_values: &'a [&'a str],
+    pub embedding_model: &'a str,
+}
+
 pub struct LanguageLogicUnit;
 
 impl LanguageLogicUnit {
@@ -109,44 +115,32 @@ impl LanguageLogicUnit {
     // the model sees before generating a response. By enforcing this structure, we can ensure that the model receives a clear and consistent
     // input format, which can help improve the quality of the generated responses.
     fn validate_messages(messages: &[OpenAIChatCompletionRequestText]) -> Result<(), Exception> {
+        let validation_err =
+            |msg: String| Err(Exception::LanguageLogic(BaseException::new(msg, None)));
+
         if messages.len() < 2 {
-            return Err(Exception::LanguageLogic(BaseException::new(
+            return validation_err(
                 "Messages must contain at least a system and a user message.".to_string(),
-                None,
-            )));
+            );
         }
 
-        // Must start with system message and then user message.
         if messages[0].role != roles::SYSTEM_ROLE {
-            return Err(Exception::LanguageLogic(BaseException::new(
-                "The first message must be a system message.".to_string(),
-                None,
-            )));
+            return validation_err("The first message must be a system message.".to_string());
         }
 
         if messages[1].role != roles::USER_ROLE {
-            return Err(Exception::LanguageLogic(BaseException::new(
-                "The second message must be a user message.".to_string(),
-                None,
-            )));
+            return validation_err("The second message must be a user message.".to_string());
         }
 
-        // Messages should strictly alternate: assistant -> user -> assistant -> ...
-        // And the sequence must end on a user message (assistant message may never be last).
         let mut expected_role = roles::ASSISTANT_ROLE;
-
         for message in messages.iter().skip(2) {
             if message.role != expected_role {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    format!(
-                        "Unexpected role '{}' in messages, expected '{}'.",
-                        message.role, expected_role
-                    ),
-                    None,
-                )));
+                return validation_err(format!(
+                    "Unexpected role '{}' in messages, expected '{}'.",
+                    message.role, expected_role
+                ));
             }
 
-            // Swap expected role for next message.
             expected_role = if expected_role == roles::ASSISTANT_ROLE {
                 roles::USER_ROLE
             } else {
@@ -154,24 +148,14 @@ impl LanguageLogicUnit {
             };
         }
 
-        let last_message = match messages.last() {
-            Some(message) => message,
-            None => {
-                return Err(Exception::LanguageLogic(BaseException::new(
-                    "Messages cannot be empty.".to_string(),
-                    None,
-                )));
-            }
-        };
-
-        if last_message.role != roles::USER_ROLE {
-            return Err(Exception::LanguageLogic(BaseException::new(
-                format!(
-                    "Messages must end with a user message, but the last message has role '{}'.",
-                    last_message.role
-                ),
-                None,
-            )));
+        if messages.last().map(|m| m.role.as_str()) != Some(roles::USER_ROLE) {
+            return validation_err(format!(
+                "Messages must end with a user message, but the last message has role '{}'.",
+                messages
+                    .last()
+                    .map(|m| m.role.as_str())
+                    .unwrap_or("unknown")
+            ));
         }
 
         Ok(())
@@ -282,11 +266,9 @@ impl LanguageLogicUnit {
 
     pub fn boolean(
         micro_prompt: &str,
-        true_values: &[&str],
-        false_values: &[&str],
+        eval_params: &BooleanEvalParams,
         context: &[ContextMessage],
         text_model: &str,
-        embedding_model: &str,
         text_model_overrides: &TextModelOverrides,
         debug_chat: bool,
     ) -> Result<u32, Exception> {
@@ -298,20 +280,22 @@ impl LanguageLogicUnit {
             debug_chat,
         )?;
 
-        let max_true_score = true_values
+        let max_true_score = eval_params
+            .true_values
             .iter()
             .map(|tv| {
-                Self::cosine_similarity(&value.to_lowercase(), &tv.to_lowercase(), embedding_model)
+                Self::cosine_similarity(&value.to_lowercase(), &tv.to_lowercase(), eval_params.embedding_model)
             })
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .max()
             .unwrap_or(0);
 
-        let max_false_score = false_values
+        let max_false_score = eval_params
+            .false_values
             .iter()
             .map(|fv| {
-                Self::cosine_similarity(&value.to_lowercase(), &fv.to_lowercase(), embedding_model)
+                Self::cosine_similarity(&value.to_lowercase(), &fv.to_lowercase(), eval_params.embedding_model)
             })
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()

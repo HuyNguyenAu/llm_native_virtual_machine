@@ -9,7 +9,7 @@ pub enum TokenType {
     // Data movement keywords.
     LoadString,
     LoadImmediate,
-    LoadFile,
+    LoadContent,
     Move,
     // Control flow keywords.
     BranchEqual,
@@ -19,22 +19,21 @@ pub enum TokenType {
     BranchGreater,
     Exit,
     // I/O keywords.
-    Out,
+    Print,
+    PrintLine,
+    PrintContext,
     // Generative operations keywords.
-    Map,
+    Inference,
     // Guardrails operations keywords.
-    Eval,
+    Evaluate,
     Similarity,
     // Context operations keywords.
-    ContextClear,
-    ContextSnapshot,
-    ContextRestore,
     ContextPush,
     ContextPop,
     ContextDrop,
-    ContextSetRole,
-    // Misc operations keywords.
-    Decrement,
+    MoveContext,
+    // Arithmetic operations keywords.
+    SubtractImmediate,
     // Misc keywords.
     Label,
     Eof,
@@ -48,7 +47,7 @@ impl TryFrom<&str> for TokenType {
         match value {
             // Data movement.
             "ls" => Ok(TokenType::LoadString),
-            "lf" => Ok(TokenType::LoadFile),
+            "lc" => Ok(TokenType::LoadContent),
             "li" => Ok(TokenType::LoadImmediate),
             "mv" => Ok(TokenType::Move),
             // Control flow.
@@ -59,22 +58,21 @@ impl TryFrom<&str> for TokenType {
             "bgt" => Ok(TokenType::BranchGreater),
             "exit" => Ok(TokenType::Exit),
             // I/O.
-            "out" => Ok(TokenType::Out),
+            "put" => Ok(TokenType::Print),
+            "pln" => Ok(TokenType::PrintLine),
+            "pcx" => Ok(TokenType::PrintContext),
             // Generative operations.
-            "map" => Ok(TokenType::Map),
+            "inf" => Ok(TokenType::Inference),
             // Guardrails operations.
-            "eval" => Ok(TokenType::Eval),
+            "eval" => Ok(TokenType::Evaluate),
             "sim" => Ok(TokenType::Similarity),
             // Context operations.
-            "clr" => Ok(TokenType::ContextClear),
-            "snp" => Ok(TokenType::ContextSnapshot),
-            "rst" => Ok(TokenType::ContextRestore),
             "psh" => Ok(TokenType::ContextPush),
             "pop" => Ok(TokenType::ContextPop),
             "drp" => Ok(TokenType::ContextDrop),
-            "srl" => Ok(TokenType::ContextSetRole),
+            "mvc" => Ok(TokenType::MoveContext),
             // Misc operations.
-            "dec" => Ok(TokenType::Decrement),
+            "subi" => Ok(TokenType::SubtractImmediate),
             _ => Err("String does not correspond to any known token type.".to_string()),
         }
     }

@@ -67,11 +67,7 @@ impl Processor {
             self.control_unit
                 .execute(
                     instruction,
-                    &self.config.text_model,
-                    &self.config.embedding_model,
-                    &self.config.text_model_overrides,
-                    self.config.debug_run,
-                    self.config.debug_chat,
+                    &self.config,
                 )
                 .map_err(|e| {
                     Exception::Processor(BaseException::caused_by(

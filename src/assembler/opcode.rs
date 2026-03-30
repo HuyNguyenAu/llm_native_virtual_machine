@@ -25,8 +25,8 @@ pub enum OpCode {
     ContextPop = 0x10,
     ContextDrop = 0x11,
     MoveContext = 0x12,
-    // Misc.
-    Decrement = 0x13,
+    // Arithmetic operations.
+    SubtractImmediate = 0x13,
     // Misc.
     NoOp = 0xFF,
 }
@@ -52,7 +52,7 @@ impl OpCode {
         OpCode::ContextPop,
         OpCode::ContextDrop,
         OpCode::MoveContext,
-        OpCode::Decrement,
+        OpCode::SubtractImmediate,
         OpCode::NoOp,
     ];
 

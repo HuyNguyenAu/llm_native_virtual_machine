@@ -82,7 +82,7 @@ pub struct MoveContextInstruction {
 }
 
 #[derive(Debug)]
-pub struct DecrementInstruction {
+pub struct SubtractImmediateInstruction {
     pub source_register: u32,
     pub value: u32,
 }
@@ -123,6 +123,6 @@ pub enum Instruction {
     ContextPop(ContextPopInstruction),
     ContextDrop(ContextDropInstruction),
     MoveContext(MoveContextInstruction),
-    // Misc.
-    Decrement(DecrementInstruction),
+    // Arithmetic operations.
+    SubtractImmediate(SubtractImmediateInstruction),
 }

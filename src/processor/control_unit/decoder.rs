@@ -4,10 +4,10 @@ use crate::{
     processor::{
         control_unit::instruction::{
             BranchInstruction, BranchType, ContextDropInstruction, ContextPopInstruction,
-            ContextPushInstruction, DecrementInstruction, EvalulateInstruction, ExitInstruction,
-            InferenceInstruction, Instruction, LoadContentInstruction, LoadImmediateInstruction,
-            LoadStringInstruction, MoveContextInstruction, MoveInstruction, PrintInstruction,
-            PrintLineInstruction, SimilarityInstruction,
+            ContextPushInstruction, EvalulateInstruction, ExitInstruction, InferenceInstruction,
+            Instruction, LoadContentInstruction, LoadImmediateInstruction, LoadStringInstruction,
+            MoveContextInstruction, MoveInstruction, PrintInstruction, PrintLineInstruction,
+            SimilarityInstruction, SubtractImmediateInstruction,
         },
         memory::Memory,
         registers::Registers,
@@ -118,11 +118,13 @@ impl Decoder {
                 destination_register: register,
                 source_register: u32::from_be_bytes(instruction_bytes[2]),
             })),
-            // Misc operations.
-            OpCode::Decrement => Ok(Instruction::Decrement(DecrementInstruction {
-                source_register: register,
-                value: u32::from_be_bytes(instruction_bytes[2]),
-            })),
+            // Arithmetic operations.
+            OpCode::SubtractImmediate => Ok(Instruction::SubtractImmediate(
+                SubtractImmediateInstruction {
+                    source_register: register,
+                    value: u32::from_be_bytes(instruction_bytes[2]),
+                },
+            )),
             _ => Err(Exception::Decoder(BaseException::new(
                 format!(
                     "Failed to decode immediate instruction: invalid opcode '{:?}'.",
@@ -341,8 +343,11 @@ impl Decoder {
             OpCode::Inference | OpCode::Evaluate | OpCode::Similarity => {
                 Self::triple_register(op_code, instruction_bytes)
             }
-            // Misc operations.
-            OpCode::Decrement => Self::immediate(memory, registers, op_code, instruction_bytes),
+            // Arithmetic operations.
+            OpCode::SubtractImmediate => {
+                Self::immediate(memory, registers, op_code, instruction_bytes)
+            }
+            // Misc.
             OpCode::NoOp => Err(Exception::Decoder(BaseException::new(
                 "NoOp is not a valid instruction and should not be decoded.".to_string(),
                 None,

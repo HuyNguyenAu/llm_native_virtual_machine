@@ -31,8 +31,8 @@ pub enum TokenType {
     ContextPop,
     ContextDrop,
     MoveContext,
-    // Misc operations keywords.
-    Decrement,
+    // Arithmetic operations keywords.
+    SubtractImmediate,
     // Misc keywords.
     Label,
     Eof,
@@ -70,7 +70,7 @@ impl TryFrom<&str> for TokenType {
             "drp" => Ok(TokenType::ContextDrop),
             "mvc" => Ok(TokenType::MoveContext),
             // Misc operations.
-            "dec" => Ok(TokenType::Decrement),
+            "subi" => Ok(TokenType::SubtractImmediate),
             _ => Err("String does not correspond to any known token type.".to_string()),
         }
     }

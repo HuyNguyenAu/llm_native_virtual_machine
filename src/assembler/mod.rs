@@ -40,8 +40,8 @@ impl From<TokenType> for OpCode {
             TokenType::ContextPop => OpCode::ContextPop,
             TokenType::ContextDrop => OpCode::ContextDrop,
             TokenType::MoveContext => OpCode::MoveContext,
-            // Misc operations.
-            TokenType::Decrement => OpCode::Decrement,
+            // Arithmetic operations.
+            TokenType::SubtractImmediate => OpCode::SubtractImmediate,
             // Misc.
             TokenType::Comma
             | TokenType::Identifier
@@ -643,8 +643,8 @@ impl Assembler {
             TokenType::ContextPop => self.double_register(token_type, op_code, false, true),
             TokenType::ContextDrop => self.no_register(token_type, op_code),
             TokenType::MoveContext => self.double_register(token_type, op_code, true, true),
-            // Misc operations.
-            TokenType::Decrement => self.single_register_number(token_type, op_code),
+            // Arithmetic operations.
+            TokenType::SubtractImmediate => self.single_register_number(token_type, op_code),
             _ => self.error_at_current("Unexpected keyword."),
         }
     }

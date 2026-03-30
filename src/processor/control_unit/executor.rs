@@ -7,10 +7,10 @@ use crate::{
         control_unit::{
             instruction::{
                 BranchInstruction, BranchType, ContextPopInstruction, ContextPushInstruction,
-                DecrementInstruction, EvalulateInstruction, InferenceInstruction, Instruction,
-                LoadContentInstruction, LoadImmediateInstruction, LoadStringInstruction,
-                MoveContextInstruction, MoveInstruction, PrintInstruction, PrintLineInstruction,
-                SimilarityInstruction,
+                EvalulateInstruction, InferenceInstruction, Instruction, LoadContentInstruction,
+                LoadImmediateInstruction, LoadStringInstruction, MoveContextInstruction,
+                MoveInstruction, PrintInstruction, PrintLineInstruction, SimilarityInstruction,
+                SubtractImmediateInstruction,
             },
             language_logic_unit::LanguageLogicUnit,
         },
@@ -405,9 +405,9 @@ impl Executor {
         Ok(())
     }
 
-    fn decrement(
+    fn subtract_immediate(
         registers: &mut Registers,
-        instruction: &DecrementInstruction,
+        instruction: &SubtractImmediateInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
         let value = Self::read_number(registers, instruction.source_register)?;
@@ -415,8 +415,8 @@ impl Executor {
         if value < instruction.value {
             return Err(Exception::Executor(BaseException::new(
                 format!(
-                    "Cannot decrement register r{} by {} because it would result in a negative value.",
-                    instruction.source_register, instruction.value
+                    "Cannot subtract {} from register r{} because it would result in a negative value.",
+                    instruction.value, instruction.source_register
                 ),
                 None,
             )));
@@ -427,9 +427,9 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed DEC : Decremented r{} from {} to {}.",
+            "Executed SUBI: Subtracted {} from r{} resulting in {}.",
+            instruction.value,
             instruction.source_register,
-            value,
             new_value
         );
 
@@ -486,8 +486,8 @@ impl Executor {
             Instruction::ContextPop(i) => Self::context_pop(registers, i, debug),
             Instruction::ContextDrop(_) => Self::context_drop(registers, debug),
             Instruction::MoveContext(i) => Self::move_context(registers, i, debug),
-            // Misc operations.
-            Instruction::Decrement(i) => Self::decrement(registers, i, debug),
+            // Arithmetic operations.
+            Instruction::SubtractImmediate(i) => Self::subtract_immediate(registers, i, debug),
         }
     }
 }

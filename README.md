@@ -152,7 +152,7 @@ The instructions `MVC`, `PSH`, `POP`, and `DRP` are used to manage the context s
 - `rs` - source general-purpose register
 - `rdc` - destination context register
 - `rsc` - source context register
-- `imm` - immediate value
+- `imm` - number value
 - `str` - string value
 - `label_name` - a label used for branching
 
@@ -181,7 +181,7 @@ The instruction set is closely inspired by RISC-V assembly language:
 | LABEL       | Define a label. Required for branching instructions                                                                              | `label_name:`                      |
 | PUT         | Print the value of `rs`                                                                                                          | `put rs`                           |
 | PLN         | Print the value of `rs` followed by a newline                                                                                    | `pln rs`                           |
-| DEC         | Decrement the value in `rs` by `num`                                                                                             | `dec rd, num`                      |
+| SUBI        | Decrement the value in `rs` by `num`                                                                                             | `sub rd, num`                      |
 | EXIT        | Exit the program                                                                                                                 | `exit`                             |
 
 ## Smaller Models

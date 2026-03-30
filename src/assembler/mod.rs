@@ -29,6 +29,7 @@ impl From<TokenType> for OpCode {
             // I/O.
             TokenType::Print => OpCode::Print,
             TokenType::PrintLine => OpCode::PrintLine,
+            TokenType::PrintContext => OpCode::PrintContext,
             // Generative operations.
             TokenType::Inference => OpCode::Inference,
             // Cognitive operations.
@@ -634,6 +635,7 @@ impl Assembler {
             // I/O.
             TokenType::Print => self.single_register(token_type, op_code, false),
             TokenType::PrintLine => self.single_register(token_type, op_code, false),
+            TokenType::PrintContext => self.single_register(token_type, op_code, true),
             // Generative, cognitive, and guardrails operations.
             TokenType::Inference | TokenType::Evaluate => {
                 self.triple_register(token_type, op_code, true)

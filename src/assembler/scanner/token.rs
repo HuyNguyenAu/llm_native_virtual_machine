@@ -21,6 +21,7 @@ pub enum TokenType {
     // I/O keywords.
     Print,
     PrintLine,
+    PrintContext,
     // Generative operations keywords.
     Inference,
     // Guardrails operations keywords.
@@ -59,6 +60,7 @@ impl TryFrom<&str> for TokenType {
             // I/O.
             "put" => Ok(TokenType::Print),
             "pln" => Ok(TokenType::PrintLine),
+            "pcx" => Ok(TokenType::PrintContext),
             // Generative operations.
             "inf" => Ok(TokenType::Inference),
             // Guardrails operations.

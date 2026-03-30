@@ -15,18 +15,19 @@ pub enum OpCode {
     // I/O.
     Print = 0x0A,
     PrintLine = 0x0B,
+    PrintContext = 0x0C,
     // Generative operations.
-    Inference = 0x0C,
+    Inference = 0x0D,
     // Guardrails operations.
-    Evaluate = 0x0D,
-    Similarity = 0x0E,
+    Evaluate = 0x0E,
+    Similarity = 0x0F,
     // Context operations.
-    ContextPush = 0x0F,
-    ContextPop = 0x10,
-    ContextDrop = 0x11,
-    MoveContext = 0x12,
+    ContextPush = 0x10,
+    ContextPop = 0x11,
+    ContextDrop = 0x12,
+    MoveContext = 0x13,
     // Arithmetic operations.
-    SubtractImmediate = 0x13,
+    SubtractImmediate = 0x14,
     // Misc.
     NoOp = 0xFF,
 }
@@ -45,6 +46,7 @@ impl OpCode {
         OpCode::Exit,
         OpCode::Print,
         OpCode::PrintLine,
+        OpCode::PrintContext,
         OpCode::Inference,
         OpCode::Evaluate,
         OpCode::Similarity,

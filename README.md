@@ -139,16 +139,20 @@ OUT X3
 
 There are 32 general-purpose registers, named X1 to X32. These registers can hold text and positive numbers (currently working on support images and audio).
 
+Context registers are named C1 to C32 and are used to manage the context stack. They hold a sequence of messages that the LPU uses to maintain context across multiple instructions.
+
 ## Context Stack
 
 The context stack is a FILO (First In, Last Out) structure that holds a sequence of messages that the LPU uses to maintain context across multiple instructions. When you push a register onto the context stack, its content is added to the bottom of the stack as a message. When you pop from the context stack, the bottom message is removed and stored in a register. The context stack can be refined during the lifetime of the program, which allows remaining relevant information while discarding irrelevant details.
 
-The instructions `SNP`, `RST`, `PSH`, `POP`, and `DRP` are used to manage the context stack. Whilst `MAP` is used to change the form of the source register, and `EVAL` takes the question/query from the source register and evaluates it as a boolean question, both of these instructions use the context stack previous history. This means that you can refine and manage the context stack to improve performance for the `MAP` and `EVAL` instructions, which is especially important when working with smaller models that have less attention capacity.
+The instructions `MVC`, `PSH`, `POP`, and `DRP` are used to manage the context stack. `INF` creates a model response prompt, and `EVAL` takes the question/query from the source register and evaluates it as a boolean question. Both of these instructions use the context stack previous history. This means that you can refine and manage the context stack to improve performance for the `MAP` and `EVAL` instructions, which is especially important when working with smaller models that have less attention capacity.
 
 ## Instruction Terminology
 
-- `rd` - destination register
-- `rs` - source register
+- `rd` - destination general-purpose register
+- `rs` - source general-purpose register
+- `rdc` - destination context register
+- `rsc` - source context register
 - `imm` - immediate value can be a string or a number
 - `label_name` - a label used for branching
 
@@ -156,31 +160,28 @@ The instructions `SNP`, `RST`, `PSH`, `POP`, and `DRP` are used to manage the co
 
 The instruction set is closely inspired by RISC-V assembly language:
 
-| Instruction | Description                                                                         | Use                        |
-| ----------- | ----------------------------------------------------------------------------------- | -------------------------- |
-| LS          | Load string into rd                                                                 | `ls rd, "example"`         |
-| LI          | Load immediate into rd                                                              | `li rd, imm`               |
-| LF          | Load file into rd                                                                   | `lf rd, "file_path"`       |
-| MV          | Copy rs into rd                                                                     | `mv rd, rs`                |
-| BEQ         | Go to label if rs1 = rs2                                                            | `beq rs1, rs2, label_name` |
-| BLT         | Go to label if rs1 < rs2                                                            | `blt rs1, rs2, label_name` |
-| BLE         | Go to label if rs1 <= rs2                                                           | `ble rs1, rs2, label_name` |
-| BGT         | Go to label if rs1 > rs2                                                            | `bgt rs1, rs2, label_name` |
-| BGE         | Go to label if rs1 >= rs2                                                           | `bge rs1, rs2, label_name` |
-| CLR         | Clear the context stack                                                             | `clr`                      |
-| SNP         | Save the current state to the context stack and store in rd                         | `snp rd`                   |
-| RST         | Restore the state from rs in the context stack                                      | `rst rs`                   |
-| PSH         | Push rs into the context stack                                                      | `psh rs`                   |
-| POP         | Pop the bottom of the context stack into rd                                         | `pop rd`                   |
-| DRP         | Drop the bottom of the context stack                                                | `drp`                      |
-| SRL         | Set the role of the context push                                                    | `srl "user"\|"assistant"`  |
-| MAP         | Change the shape to the form of rs and store in rd                                  | `map rd, rs`               |
-| EVAL        | Boolean evaluation of the question rs and store in rd (0 = false/no,, 1 = true/yes) | `eval rd, rs`              |
-| SIM         | Cosine similarity between rs and rs and store in rd (0 - 100)                       | `sim rd, rs`               |
-| LABEL       | Define a label. Required for branching instructions                                 | `label_name:`              |
-| OUT         | Print the value of rs                                                               | `out rs\|imm`              |
-| DEC         | Decrement the value in rs by num                                                    | `dec rd, num`              |
-| EXIT        | Exit the program                                                                    | `exit`                     |
+| Instruction | Description                                                                                                                      | Use                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| LS          | Load string into `rd`                                                                                                            | `ls rd, "example"`                 |
+| LI          | Load immediate into `rd`                                                                                                         | `li rd, imm`                       |
+| LC          | Load the content from the path `rs` into `rd`                                                                                    | `lc rd, "file_path"`               |
+| MV          | Copy `rs` into `rd`                                                                                                              | `mv rd, rs`                        |
+| MVC         | Copy `rsc` into `rdc`                                                                                                            | `mvc rdc, rsc`                     |
+| BEQ         | Go to label if `rs1` = `rs2`                                                                                                     | `beq rs1, rs2, label_name`         |
+| BLT         | Go to label if `rs1` < `rs2`                                                                                                     | `blt rs1, rs2, label_name`         |
+| BLE         | Go to label if `rs1` <= `rs2`                                                                                                    | `ble rs1, rs2, label_name`         |
+| BGT         | Go to label if `rs1` > `rs2`                                                                                                     | `bgt rs1, rs2, label_name`         |
+| BGE         | Go to label if `rs1` >= `rs2`                                                                                                    | `bge rs1, rs2, label_name`         |
+| PSH         | Push `rs` into the context stack `rdc` with role                                                                                 | `psh rdc, rs, "user"\|"assistant"` |
+| POP         | Pop the bottom of the context stack `rsc` into `rd`                                                                              | `pop rd, rsc`                      |
+| DRP         | Drop the bottom of the context stack                                                                                             | `drp`                              |
+| INF         | Use `rs` as the next message and store the response in `rd` using context register `rsc`                                         | `inf rd, rs, rsc`                  |
+| EVAL        | Boolean evaluation of the question `rs` and store the response in `rd` (0 = false/no, 1 = true/yes) using context register `rsc` | `eval rd, rs, rsc`                 |
+| SIM         | Cosine similarity between `rs` and `rs` and store the result in `rd` (0 - 100)                                                   | `sim rd, rs`                       |
+| LABEL       | Define a label. Required for branching instructions                                                                              | `label_name:`                      |
+| OUT         | Print the value of `rs`                                                                                                          | `out rs\|imm`                      |
+| DEC         | Decrement the value in `rs` by `num`                                                                                             | `dec rd, num`                      |
+| EXIT        | Exit the program                                                                                                                 | `exit`                             |
 
 ## Smaller Models
 
@@ -244,6 +245,7 @@ Some tips for working with smaller models:
    ```
 
 ### Why Use LFM2 models?
+
 LFM2 models are very fast and capable enough for general purpose tasks relative to their size and have decent knowledge and reasoning capabilities. Here we are more concerned with the speed of the model because the LPU is designed to work with smaller models that can run on consumer hardware.
 
 ### Run The Example Program

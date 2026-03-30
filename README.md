@@ -1,18 +1,20 @@
-# Language Processor Unit (LPU)
+# LLM Native Virtual Machine
 
-Let's start out with an idea _because I'm bored_: **What if a processor had an ALU (Arithmetic Logic Unit) that was an LLM?**
+Let's start out with an idea _because I'm bored_: **What if a programming language was powered by an LLM?**
 
-Basically, we shifted from having a processor that is exact and deterministic to one that is probabilistic and generative. This new paradigm called "Soft Computing" allows us to work with data that is unstructured, messy, or subjective in a way that traditional computing struggles with. In short, we can handle ambiguity and fuzzy logic, which is becoming more common in real‑world applications.
+Basically, we shifted from having deterministic operations to one that is probabilistic and generative. This new paradigm called "Soft Computing" allows us to work with data that is unstructured, messy, or subjective in a way that traditional computing struggles with. In short, we can handle ambiguity and fuzzy logic, which is becoming more common in real‑world applications.
 
-This project explores the idea of implementing a simple processor that has memory (RAM), a control unit, registers, and an ALU that is powered by a language model. The instruction set is designed to allow us to write code that can interact with the language model in a structured way, while still allowing for the flexibility and creativity of natural language prompts.
+This project explores the idea of implementing a simple and reduced programming language which attempts to make the programmer focus more on the "what" rather than the "how" by keeping the instructions simple and moving the complexity to the language model.
 
-Think of this assembly language as a middle ground between traditional programming languages and natural language prompts, where we can write code that is more structured and modular than natural language prompts, but still allows us to work with multi-modal data in a way that is more intuitive and flexible than traditional programming languages.
+What we have here is a new way to decompose large complex prompts into small atomic instructions that can be executed sequentially while maintaining a context stack to keep track of the conversation history and relevant information. This allows the language model acheive better performance and accuracy, especially when working with smaller models that have less attention capacity.
+
+Think of this language as a middle ground between traditional programming languages and natural language prompts, where we can write code that is more structured and modular than natural language prompts, but still allows us to work with multi-modal data (only text for now) in a way that is more intuitive and flexible than traditional programming languages.
 
 ## Why?
 
 I really wanted to imagine a future where we can write code where we don't have to worry about edge cases or complex logic to handle unstructured data. Instead, we can just write code that describes what we want to achieve, and let the language model handle the complexity of how to achieve it. In short, **we can write code that is more focused on the "what" rather than the "how"**.
 
-Here's an example of what a program written in this assembly language looks like:
+Here's an example of what a program written in this language looks like:
 
 ```
 ; Program: Room Comfort Adjustment System
@@ -170,11 +172,12 @@ PLN  X3
 ## Registers
 
 There are 33 general-purpose registers, named X0 to X32. These registers can hold text and positive numbers (currently working on support images and audio).
-Similary, there are 33 context registers, named C0 to C32. These registers are used to manage the context stack, which is a FILO (First In, Last Out) structure that holds a sequence of messages that the LPU uses to maintain context across multiple instructions.
+
+Similary, there are 33 context registers, named C0 to C32. These registers are used to manage the context stack, which is a FILO (First In, Last Out) structure that holds a sequence of messages that certain instructions use to maintain context.
 
 ## Context Stack
 
-The context stack is a FILO (First In, Last Out) structure that holds a sequence of messages that the LPU uses to maintain context across multiple instructions. When you push a register onto the context stack, its content is added to the bottom of the stack as a message. When you pop from the context stack, the bottom message is removed and stored in a register. The context stack can be refined during the lifetime of the program, which allows remaining relevant information while discarding irrelevant details.
+The context stack is a FILO (First In, Last Out) structure that holds a sequence of messages that certain instructions use to maintain context. When you push a register onto the context stack, its content is added to the bottom of the stack as a message. When you pop from the context stack, the bottom message is removed and stored in a register. The context stack can be refined during the lifetime of the program, which allows remaining relevant information while discarding irrelevant details.
 
 The instructions `MVC`, `PSH`, `POP`, and `DRP` are used to manage the context stack. `GEN` creates a model response prompt, and `EVAL` takes the question/query from the source register and evaluates it as a boolean question. Both of these instructions use the context stack previous history. This means that you can refine and manage the context stack to improve performance for the `MAP` and `EVAL` instructions, which is especially important when working with smaller models that have less attention capacity.
 
@@ -190,7 +193,7 @@ The instructions `MVC`, `PSH`, `POP`, and `DRP` are used to manage the context s
 
 ## Instruction Set
 
-The instruction set is closely inspired by RISC-V assembly language:
+The instruction set is loosely inspired by RISC-V assembly language:
 
 | Instruction | Description                                                                                                                      | Use                                |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
@@ -257,6 +260,9 @@ Some tips for working with smaller models:
 
    # When true, output excuted instructions and their results.
    DEBUG_RUN=false
+
+   # When true, output chat interactions with the language model.
+   DEBUG_CHAT=false
 
    # LFM2-2.6B recommended parameters.
    TEXT_MODEL_TEMPERATURE=0.3

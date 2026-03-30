@@ -3,38 +3,38 @@
 ; Output: A status of "ACCEPTED" or "REJECTED" along with reasons for rejection if applicable.
 
 ; Load the candidate content and the AI standard.
-LF   X1, "examples/data/user_post.txt"
+LC   X1, "examples/data/user_post.txt"
 
-PSH  X1                  ; Push the user post content onto the context stack for processing.
+PSH  C1, X1, "user"     ; Push the user post content onto the context stack for processing.
 
 ; Guardrails: Audit the content against the AI standard to determine if it is likely AI-generated.
 LS   X2, "Is the following content likely to be AI-generated?"
-EVAL X3, X2
+EVAL X3, X2, C1
 
-LI  X2, 100             ; Audit will return 100, the the content is 100% likely to be AI-generated.
-BGE X3, X2, REJECT
+LI   X2, 100            ; Audit will return 100, the the content is 100% likely to be AI-generated.
+BGE  X3, X2, REJECT
 
 ; Not AI-generated, accept the content.
-LS  X2, "STATUS: ACCEPTED"
-OUT X2
+LS   X2, "STATUS: ACCEPTED"
+PLN  X2
 EXIT
 
 REJECT:
-LS  X2, "STATUS: REJECTED"
-OUT X2
+LS   X2, "STATUS: REJECTED"
+PLN  X2
 
 ; Check similarity to known AI slop.
-LS  X2, "In today's fast-paced ecosystem, it is crucial to leverage cutting-edge synergies."
-SIM X4, X2, X1
+LS   X2, "In today's fast-paced ecosystem, it is crucial to leverage cutting-edge synergies."
+SIM  X4, X2, X1
 
 ; Find the specific reasons for rejection by comparing the content against the AI standard.
-LS  X2, "Extract all corporate buzzwords from the text into a comma-separated list."
-MAP X5, X2  
+LS   X2, "Extract all corporate buzzwords from the text into a comma-separated list."
+INF  X5, X2, C1
 
-LS  X2, "AI Similarity Score (%):"
-OUT X2
-OUT X4
+LS   X2, "AI Similarity Score (%): "
+PUT  X2
+PLN  X4
 
-LS X2, "Corporate Buzzwords Detected:"
-OUT X2
-OUT X5
+LS   X2, "Corporate Buzzwords Detected: "
+PUT  X2
+PLN  X5

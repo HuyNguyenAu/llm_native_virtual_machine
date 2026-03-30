@@ -17,7 +17,7 @@ pub enum OpCode {
     // Generative operations.
     Inference = 0x0B,
     // Guardrails operations.
-    Eval = 0x0C,
+    Evaluate = 0x0C,
     Similarity = 0x0D,
     // Context operations.
     ContextPush = 0x0E,
@@ -46,7 +46,7 @@ impl TryFrom<u32> for OpCode {
             0x09 => Ok(OpCode::Exit),
             0x0A => Ok(OpCode::Out),
             0x0B => Ok(OpCode::Inference),
-            0x0C => Ok(OpCode::Eval),
+            0x0C => Ok(OpCode::Evaluate),
             0x0D => Ok(OpCode::Similarity),
             0x0E => Ok(OpCode::ContextPush),
             0x0F => Ok(OpCode::ContextPop),

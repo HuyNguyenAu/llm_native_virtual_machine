@@ -23,7 +23,7 @@ pub enum TokenType {
     // Generative operations keywords.
     Inference,
     // Guardrails operations keywords.
-    Eval,
+    Evaluate,
     Similarity,
     // Context operations keywords.
     ContextPush,
@@ -59,7 +59,7 @@ impl TryFrom<&str> for TokenType {
             // Generative operations.
             "inf" => Ok(TokenType::Inference),
             // Guardrails operations.
-            "eval" => Ok(TokenType::Eval),
+            "eval" => Ok(TokenType::Evaluate),
             "sim" => Ok(TokenType::Similarity),
             // Context operations.
             "psh" => Ok(TokenType::ContextPush),

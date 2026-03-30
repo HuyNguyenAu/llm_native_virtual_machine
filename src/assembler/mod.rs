@@ -31,7 +31,7 @@ impl From<TokenType> for OpCode {
             // Generative operations.
             TokenType::Inference => OpCode::Inference,
             // Cognitive operations.
-            TokenType::Eval => OpCode::Eval,
+            TokenType::Evaluate => OpCode::Evaluate,
             // Guardrails operations.
             TokenType::Similarity => OpCode::Similarity,
             // Context operations.
@@ -637,7 +637,7 @@ impl Assembler {
             // I/O.
             TokenType::Out => self.single_register(token_type, op_code),
             // Generative, cognitive, and guardrails operations.
-            TokenType::Inference | TokenType::Eval => {
+            TokenType::Inference | TokenType::Evaluate => {
                 self.triple_register(token_type, op_code, true)
             }
             TokenType::Similarity => self.triple_register(token_type, op_code, false),

@@ -6,11 +6,12 @@ use crate::{
     processor::{
         control_unit::{
             instruction::{
-                BranchInstruction, BranchType, ContextDropInstruction, ContextPopInstruction,
-                ContextPushInstruction, EvalulateInstruction, InferenceInstruction, Instruction,
-                LoadContentInstruction, LoadImmediateInstruction, LoadStringInstruction,
-                MoveContextInstruction, MoveInstruction, PrintContextInstruction, PrintInstruction,
-                PrintLineInstruction, SimilarityInstruction, SubtractImmediateInstruction,
+                AddImmediateInstruction, BranchInstruction, BranchType, ContextDropInstruction,
+                ContextPopInstruction, ContextPushInstruction, EvalulateInstruction,
+                InferenceInstruction, Instruction, LineCountInstruction, LoadContentInstruction,
+                LoadImmediateInstruction, LoadStringInstruction, MoveContextInstruction,
+                MoveInstruction, PrintContextInstruction, PrintInstruction, PrintLineInstruction,
+                ReadCSVInstruction, SimilarityInstruction, SubtractImmediateInstruction,
             },
             language_logic_unit::{BooleanEvalParams, LanguageLogicUnit},
         },
@@ -439,6 +440,27 @@ impl Executor {
         Ok(())
     }
 
+    fn add_immediate(
+        registers: &mut Registers,
+        instruction: &AddImmediateInstruction,
+        debug: bool,
+    ) -> Result<(), Exception> {
+        let value = Self::read_number(registers, instruction.destination_register)?;
+
+        let new_value = Value::Number(value + instruction.value);
+        registers.set_register(instruction.destination_register, &new_value)?;
+
+        crate::debug_print!(
+            debug,
+            "Executed ADDI: Added {} to r{} resulting in {}.",
+            instruction.value,
+            instruction.destination_register,
+            new_value
+        );
+
+        Ok(())
+    }
+
     fn subtract_immediate(
         registers: &mut Registers,
         instruction: &SubtractImmediateInstruction,
@@ -465,6 +487,70 @@ impl Executor {
             instruction.value,
             instruction.source_register,
             new_value
+        );
+
+        Ok(())
+    }
+
+    pub fn read_csv(
+        registers: &mut Registers,
+        instruction: &ReadCSVInstruction,
+        debug: bool,
+    ) -> Result<(), Exception> {
+        let csv_content = Self::read_text(registers, instruction.source_register)?.clone();
+        let row_number = Self::read_number(registers, instruction.row_number_register)? as usize;
+
+        let row = csv_content
+            .lines()
+            .nth(row_number)
+            .ok_or_else(|| {
+                Exception::Executor(BaseException::new(
+                    format!(
+                        "Out of bounds access when reading CSV: requested row {}, but only {} rows available.",
+                        row_number,
+                        csv_content.lines().count()
+                    ),
+                    None,
+                ))
+            })?;
+
+        registers.set_register(
+            instruction.destination_register,
+            &Value::Text(row.to_string()),
+        )?;
+
+        crate::debug_print!(
+            debug,
+            "Executed RCSV : r{} = {:?}",
+            instruction.destination_register,
+            row
+        );
+
+        Ok(())
+    }
+
+    pub fn line_count(
+        registers: &mut Registers,
+        instruction: &LineCountInstruction,
+        debug: bool,
+    ) -> Result<(), Exception> {
+        let row_count = Self::read_text(registers, instruction.source_register)?
+            .lines()
+            .count();
+        let value = u32::try_from(row_count).map_err(|e| {
+            Exception::Executor(BaseException::caused_by(
+                "Failed to convert line count to u32",
+                e.to_string(),
+            ))
+        })?;
+
+        registers.set_register(instruction.destination_register, &Value::Number(value))?;
+
+        crate::debug_print!(
+            debug,
+            "Executed LCNT : r{} = {}",
+            instruction.destination_register,
+            value
         );
 
         Ok(())
@@ -511,14 +597,22 @@ impl Executor {
                 config.debug_run,
                 config.debug_chat,
             ),
-            Instruction::Similarity(i) => Self::similarity(registers, i, &config.embedding_model, config.debug_run),
+            Instruction::Similarity(i) => {
+                Self::similarity(registers, i, &config.embedding_model, config.debug_run)
+            }
             // Context operations.
             Instruction::ContextPush(i) => Self::context_push(registers, i, config.debug_run),
             Instruction::ContextPop(i) => Self::context_pop(registers, i, config.debug_run),
             Instruction::ContextDrop(i) => Self::context_drop(registers, i, config.debug_run),
             Instruction::MoveContext(i) => Self::move_context(registers, i, config.debug_run),
             // Arithmetic operations.
-            Instruction::SubtractImmediate(i) => Self::subtract_immediate(registers, i, config.debug_run),
+            Instruction::AddImmediate(i) => Self::add_immediate(registers, i, config.debug_run),
+            Instruction::SubtractImmediate(i) => {
+                Self::subtract_immediate(registers, i, config.debug_run)
+            }
+            // CSV operations.
+            Instruction::ReadCSV(i) => Self::read_csv(registers, i, config.debug_run),
+            Instruction::LineCount(i) => Self::line_count(registers, i, config.debug_run),
         }
     }
 }

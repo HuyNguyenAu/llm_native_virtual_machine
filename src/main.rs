@@ -39,9 +39,22 @@ fn load_config() -> Result<Config, Exception> {
         )));
     }
 
+    let text_model = env::required(TEXT_MODEL_ENV).map_err(|e| {
+        Exception::Config(BaseException::caused_by(
+            "Failed to load text model configuration from environment.".to_string(),
+            e,
+        ))
+    })?;
+    let embedding_model = env::required(EMBEDDING_MODEL_ENV).map_err(|e| {
+        Exception::Config(BaseException::caused_by(
+            "Failed to load embedding model configuration from environment.".to_string(),
+            e,
+        ))
+    })?;
+
     Ok(Config {
-        text_model: env::required(TEXT_MODEL_ENV)?,
-        embedding_model: env::required(EMBEDDING_MODEL_ENV)?,
+        text_model,
+        embedding_model,
         base_url: env::with_default(OPENAI_BASE_URL_ENV, OPENAI_BASE_URL_DEFAULT),
         chat_completion_endpoint: env::with_default(
             OPENAI_CHAT_COMPLETION_ENDPOINT_ENV,

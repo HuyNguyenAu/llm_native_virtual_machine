@@ -46,6 +46,7 @@ pub enum Exception {
     Processor(BaseException),
     Memory(BaseException),
     Register(BaseException),
+    Config(BaseException),
 }
 
 impl Exception {
@@ -62,7 +63,8 @@ impl Exception {
             | Self::Executor(e)
             | Self::Processor(e)
             | Self::Memory(e)
-            | Self::Register(e) => e,
+            | Self::Register(e)
+            | Self::Config(e) => e,
         }
     }
 
@@ -79,7 +81,8 @@ impl Exception {
             | Self::Executor(e)
             | Self::Processor(e)
             | Self::Memory(e)
-            | Self::Register(e) => e,
+            | Self::Register(e)
+            | Self::Config(e) => e,
         }
     }
 }

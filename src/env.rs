@@ -1,17 +1,12 @@
 use std::env;
 
-use crate::exception::{BaseException, Exception};
-
 pub fn args() -> Vec<String> {
     env::args().collect()
 }
 
-pub fn required(key: &str) -> Result<String, Exception> {
+pub fn required(key: &str) -> Result<String, String> {
     env::var(key).map_err(|e| {
-        Exception::Program(BaseException::caused_by(
-            format!("{} must be set in the .env file", key),
-            format!("{:#?}", e),
-        ))
+        format!("{} must be set in the .env file: {:#?}", key, e)
     })
 }
 

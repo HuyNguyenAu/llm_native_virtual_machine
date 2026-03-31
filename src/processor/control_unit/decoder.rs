@@ -1,7 +1,5 @@
 use crate::{
-    exception::{BaseException, Exception},
-    opcodes::OpCode,
-    processor::{
+    assembler::opcode::OpCode, exception::{BaseException, Exception}, processor::{
         control_unit::instruction::{
             AddImmediateInstruction, BranchInstruction, BranchType, ContextDropInstruction,
             ContextPopInstruction, ContextPushInstruction, EvaluateInstruction, ExitInstruction,
@@ -12,7 +10,7 @@ use crate::{
         },
         memory::Memory,
         registers::Registers,
-    },
+    }
 };
 
 pub struct Decoder;

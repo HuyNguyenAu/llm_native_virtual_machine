@@ -225,11 +225,14 @@ The instruction set is loosely inspired by RISC-V assembly language:
 | INF         | Use `rs` as the next message and store the response in `rd` using context register `rsc`                                         | `inf rd, rs, rsc`                  |
 | EVAL        | Boolean evaluation of the question `rs` and store the response in `rd` (0 = false/no, 1 = true/yes) using context register `rsc` | `eval rd, rs, rsc`                 |
 | SIM         | Cosine similarity between `rs` and `rs` and store the result in `rd` (0 - 100)                                                   | `sim rd, rs`                       |
-| LABEL       | Define a label. Required for branching instructions                                                                              | `label_name:`                      |
+| RLN         | Read from `rs1` with line index `rs2` and store line in `rd`                                                                     | `rln rd, rs1, rs2`                 |
+| CLN         | Get the line count of `rs` and store in `rd`                                                                                     | `cln rd, rs`                       |
 | PUT         | Print the value of `rs`                                                                                                          | `put rs`                           |
 | PLN         | Print the value of `rs` followed by a newline                                                                                    | `pln rs`                           |
 | PCX         | Print the content of the context register `rsc`                                                                                  | `pcx rsc`                          |
-| SUBI        | Decrement the value in `rs` by `num`                                                                                             | `sub rd, num`                      |
+| ADDI        | Increment the value in `rs` by `num`                                                                                             | `addi rd, num`                     |
+| SUBI        | Decrement the value in `rs` by `num`                                                                                             | `subi rd, num`                     |
+| LABEL       | Define a label. Required for branching instructions                                                                              | `label_name:`                      |
 | EXIT        | Exit the program                                                                                                                 | `exit`                             |
 
 ## Smaller Models

@@ -29,9 +29,9 @@ pub enum OpCode {
     // Arithmetic operations.
     AddImmediate = 0x14,
     SubtractImmediate = 0x15,
-    // CSV operations.
-    ReadCSV = 0x16,
-    LineCount = 0x17,
+    // Text operations.
+    ReadLine = 0x16,
+    CountLines = 0x17,
     // Misc.
     NoOp = 0xFF,
 }
@@ -67,9 +67,9 @@ impl OpCode {
         // Arithmetic operations.
         OpCode::AddImmediate,
         OpCode::SubtractImmediate,
-        // CSV operations.
-        OpCode::ReadCSV,
-        OpCode::LineCount,
+        // Text operations.
+        OpCode::ReadLine,
+        OpCode::CountLines,
         // Misc.
         OpCode::NoOp,
     ];

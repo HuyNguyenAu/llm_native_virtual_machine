@@ -35,9 +35,9 @@ pub enum TokenType {
     // Arithmetic operations keywords.
     AddImmediate,
     SubtractImmediate,
-    // CSV operations keywords.
-    ReadCSV,
-    LineCount,
+    // Line operations keywords.
+    ReadLine,
+    CountLines,
     // Misc keywords.
     Label,
     Eof,
@@ -78,9 +78,9 @@ impl TryFrom<&str> for TokenType {
             // Arithmetic operations.
             "addi" => Ok(TokenType::AddImmediate),
             "subi" => Ok(TokenType::SubtractImmediate),
-            // CSV operations.
-            "rcsv" => Ok(TokenType::ReadCSV),
-            "lcnt" => Ok(TokenType::LineCount),
+            // Line operations.
+            "rln" => Ok(TokenType::ReadLine),
+            "cln" => Ok(TokenType::CountLines),
             _ => Err("String does not correspond to any known token type.".to_string()),
         }
     }

@@ -5,10 +5,10 @@ use crate::{
         control_unit::instruction::{
             AddImmediateInstruction, BranchInstruction, BranchType, ContextDropInstruction,
             ContextPopInstruction, ContextPushInstruction, EvaluateInstruction, ExitInstruction,
-            InferenceInstruction, Instruction, LineCountInstruction, LoadContentInstruction,
+            InferenceInstruction, Instruction, CountLinesInstruction, LoadContentInstruction,
             LoadImmediateInstruction, LoadStringInstruction, MoveContextInstruction,
             MoveInstruction, PrintContextInstruction, PrintInstruction, PrintLineInstruction,
-            ReadCSVInstruction, SimilarityInstruction, SubtractImmediateInstruction,
+            ReadLineInstruction, SimilarityInstruction, SubtractImmediateInstruction,
         },
         memory::Memory,
         registers::Registers,
@@ -229,8 +229,8 @@ impl Decoder {
                 destination_context_register: destination_register,
                 source_context_register: source_register,
             })),
-            // CSV operations.
-            OpCode::LineCount => Ok(Instruction::LineCount(LineCountInstruction {
+            // Line operations.
+            OpCode::CountLines => Ok(Instruction::CountLines(CountLinesInstruction {
                 destination_register,
                 source_register,
             })),
@@ -312,11 +312,11 @@ impl Decoder {
                 source_register_1,
                 source_register_2,
             })),
-            // CSV operations.
-            OpCode::ReadCSV => Ok(Instruction::ReadCSV(ReadCSVInstruction {
+            // Line operations.
+            OpCode::ReadLine => Ok(Instruction::ReadLine(ReadLineInstruction {
                 destination_register,
                 source_register: source_register_1,
-                row_number_register: source_register_2,
+                line_number_register: source_register_2,
             })),
             _ => Err(Exception::Decoder(BaseException::new(
                 format!(
@@ -375,9 +375,9 @@ impl Decoder {
             OpCode::AddImmediate | OpCode::SubtractImmediate => {
                 Self::decode_immediate(memory, registers, op_code, instruction_bytes)
             }
-            // CSV operations.
-            OpCode::ReadCSV => Self::decode_triple_register(op_code, instruction_bytes),
-            OpCode::LineCount => Self::decode_double_register(op_code, instruction_bytes),
+            // Text operations.
+            OpCode::ReadLine => Self::decode_triple_register(op_code, instruction_bytes),
+            OpCode::CountLines => Self::decode_double_register(op_code, instruction_bytes),
             // Misc.
             OpCode::NoOp => unreachable!(),
         };

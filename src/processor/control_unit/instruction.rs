@@ -111,14 +111,14 @@ pub struct PrintContextInstruction {
 }
 
 #[derive(Debug)]
-pub struct ReadCSVInstruction {
+pub struct ReadLineInstruction {
     pub destination_register: u32,
     pub source_register: u32,
-    pub row_number_register: u32,
+    pub line_number_register: u32,
 }
 
 #[derive(Debug)]
-pub struct LineCountInstruction {
+pub struct CountLinesInstruction {
     pub destination_register: u32,
     pub source_register: u32,
 }
@@ -153,7 +153,7 @@ pub enum Instruction {
     // Arithmetic operations.
     AddImmediate(AddImmediateInstruction),
     SubtractImmediate(SubtractImmediateInstruction),
-    // CSV operations.
-    ReadCSV(ReadCSVInstruction),
-    LineCount(LineCountInstruction),
+    // Line operations.
+    ReadLine(ReadLineInstruction),
+    CountLines(CountLinesInstruction),
 }

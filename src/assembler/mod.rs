@@ -45,9 +45,9 @@ impl From<TokenType> for OpCode {
             // Arithmetic operations.
             TokenType::AddImmediate => OpCode::AddImmediate,
             TokenType::SubtractImmediate => OpCode::SubtractImmediate,
-            // CSV operations.
-            TokenType::ReadCSV => OpCode::ReadCSV,
-            TokenType::LineCount => OpCode::LineCount,
+            // Line operations.
+            TokenType::ReadLine => OpCode::ReadLine,
+            TokenType::CountLines => OpCode::CountLines,
             // Misc.
             TokenType::Comma
             | TokenType::Identifier
@@ -699,9 +699,9 @@ impl Assembler {
             TokenType::AddImmediate | TokenType::SubtractImmediate => {
                 self.single_register_number(token_type, op_code)
             }
-            // CSV operations.
-            TokenType::ReadCSV => self.triple_register(token_type, op_code, false),
-            TokenType::LineCount => self.double_register(token_type, op_code, false, false),
+            // Line operations.
+            TokenType::ReadLine => self.triple_register(token_type, op_code, false),
+            TokenType::CountLines => self.double_register(token_type, op_code, false, false),
             _ => self.error_at_current("Unexpected keyword."),
         }
     }

@@ -8,10 +8,10 @@ use crate::{
             instruction::{
                 AddImmediateInstruction, BranchInstruction, BranchType, ContextDropInstruction,
                 ContextPopInstruction, ContextPushInstruction, EvaluateInstruction,
-                InferenceInstruction, Instruction, LineCountInstruction, LoadContentInstruction,
+                InferenceInstruction, Instruction, CountLinesInstruction, LoadContentInstruction,
                 LoadImmediateInstruction, LoadStringInstruction, MoveContextInstruction,
                 MoveInstruction, PrintContextInstruction, PrintInstruction, PrintLineInstruction,
-                ReadCSVInstruction, SimilarityInstruction, SubtractImmediateInstruction,
+                ReadLineInstruction, SimilarityInstruction, SubtractImmediateInstruction,
             },
             language_logic_unit::{
                 LanguageLogicUnit, boolean_eval_params::BooleanEvalParams,
@@ -802,9 +802,9 @@ impl Executor {
         Ok(())
     }
 
-    pub fn read_csv(
+    pub fn read_line(
         registers: &mut Registers,
-        instruction: &ReadCSVInstruction,
+        instruction: &ReadLineInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
         let csv_content = Self::read_text(registers, instruction.source_register)
@@ -818,25 +818,25 @@ impl Executor {
                 ))
             })?
             .clone();
-        let row_number =
-            Self::read_number(registers, instruction.row_number_register).map_err(|e| {
+        let line_number =
+            Self::read_number(registers, instruction.line_number_register).map_err(|e| {
                 Exception::Executor(BaseException::caused_by(
                     format!(
-                        "Failed to read row number from register r{}.",
-                        instruction.row_number_register
+                        "Failed to read line number from register r{}.",
+                        instruction.line_number_register
                     ),
                     e,
                 ))
             })? as usize;
 
-        let row = csv_content
+        let line = csv_content
             .lines()
-            .nth(row_number)
+            .nth(line_number)
             .ok_or_else(|| {
                 Exception::Executor(BaseException::new(
                     format!(
-                        "Out of bounds access when reading CSV: requested row {}, but only {} rows available.",
-                        row_number,
+                        "Out of bounds access when reading CSV: requested line {}, but only {} lines available.",
+                        line_number,
                         csv_content.lines().count()
                     ),
                     None,
@@ -846,12 +846,12 @@ impl Executor {
         registers
             .set_register(
                 instruction.destination_register,
-                &Value::Text(row.to_string()),
+                &Value::Text(line.to_string()),
             )
             .map_err(|e| {
                 Exception::Executor(BaseException::caused_by(
                     format!(
-                        "Failed to write CSV row to destination register r{}.",
+                        "Failed to write CSV line to destination register r{}.",
                         instruction.destination_register
                     ),
                     e,
@@ -860,17 +860,17 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed RCSV : r{} = {:?}",
+            "Executed RLN : r{} = {:?}",
             instruction.destination_register,
-            row
+            line
         );
 
         Ok(())
     }
 
-    pub fn line_count(
+    pub fn count_lines(
         registers: &mut Registers,
-        instruction: &LineCountInstruction,
+        instruction: &CountLinesInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
         let row_count = Self::read_text(registers, instruction.source_register)
@@ -906,7 +906,7 @@ impl Executor {
 
         crate::debug_print!(
             debug,
-            "Executed LCNT : r{} = {}",
+            "Executed CLN : r{} = {}",
             instruction.destination_register,
             value
         );
@@ -951,9 +951,9 @@ impl Executor {
             Instruction::SubtractImmediate(i) => {
                 Self::subtract_immediate(registers, i, config.debug_run)
             }
-            // CSV operations.
-            Instruction::ReadCSV(i) => Self::read_csv(registers, i, config.debug_run),
-            Instruction::LineCount(i) => Self::line_count(registers, i, config.debug_run),
+            // Text operations.
+            Instruction::ReadLine(i) => Self::read_line(registers, i, config.debug_run),
+            Instruction::CountLines(i) => Self::count_lines(registers, i, config.debug_run),
         };
         result.map_err(|e| {
             Exception::Executor(BaseException::caused_by("Instruction execution failed.", e))

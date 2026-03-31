@@ -84,6 +84,12 @@ pub struct MoveContextInstruction {
 }
 
 #[derive(Debug)]
+pub struct AddImmediateInstruction {
+    pub destination_register: u32,
+    pub value: u32,
+}
+
+#[derive(Debug)]
 pub struct SubtractImmediateInstruction {
     pub source_register: u32,
     pub value: u32,
@@ -144,6 +150,7 @@ pub enum Instruction {
     ContextDrop(ContextDropInstruction),
     MoveContext(MoveContextInstruction),
     // Arithmetic operations.
+    AddImmediate(AddImmediateInstruction),
     SubtractImmediate(SubtractImmediateInstruction),
     // CSV operations.
     ReadCSV(ReadCSVInstruction),

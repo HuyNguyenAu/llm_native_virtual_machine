@@ -33,6 +33,7 @@ pub enum TokenType {
     ContextDrop,
     MoveContext,
     // Arithmetic operations keywords.
+    AddImmediate,
     SubtractImmediate,
     // CSV operations keywords.
     ReadCSV,
@@ -75,6 +76,7 @@ impl TryFrom<&str> for TokenType {
             "drp" => Ok(TokenType::ContextDrop),
             "mvc" => Ok(TokenType::MoveContext),
             // Arithmetic operations.
+            "addi" => Ok(TokenType::AddImmediate),
             "subi" => Ok(TokenType::SubtractImmediate),
             // CSV operations.
             "rcsv" => Ok(TokenType::ReadCSV),

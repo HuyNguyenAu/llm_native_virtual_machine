@@ -3,7 +3,12 @@ use crate::{
     exception::{BaseException, Exception},
     processor::{
         control_unit::instruction::{
-            BranchInstruction, BranchType, ContextDropInstruction, ContextPopInstruction, ContextPushInstruction, EvalulateInstruction, ExitInstruction, InferenceInstruction, Instruction, LoadContentInstruction, LoadImmediateInstruction, LoadStringInstruction, MoveContextInstruction, MoveInstruction, PrintContextInstruction, PrintInstruction, PrintLineInstruction, ReadCSVInstruction, SimilarityInstruction, StatusCSVInstruction, SubtractImmediateInstruction
+            AddImmediateInstruction, BranchInstruction, BranchType, ContextDropInstruction,
+            ContextPopInstruction, ContextPushInstruction, EvalulateInstruction, ExitInstruction,
+            InferenceInstruction, Instruction, LoadContentInstruction, LoadImmediateInstruction,
+            LoadStringInstruction, MoveContextInstruction, MoveInstruction,
+            PrintContextInstruction, PrintInstruction, PrintLineInstruction, ReadCSVInstruction,
+            SimilarityInstruction, StatusCSVInstruction, SubtractImmediateInstruction,
         },
         memory::Memory,
         registers::Registers,
@@ -72,6 +77,7 @@ impl Decoder {
         let register = u32::from_be_bytes(instruction_bytes[1]);
 
         match op_code {
+            // Data movement.
             OpCode::LoadString | OpCode::LoadContent => {
                 let string_pointer = u32::from_be_bytes(instruction_bytes[2]) as usize;
                 let string = Self::string(
@@ -100,6 +106,11 @@ impl Decoder {
             OpCode::Move => Ok(Instruction::Move(MoveInstruction {
                 destination_register: register,
                 source_register: u32::from_be_bytes(instruction_bytes[2]),
+            })),
+            // Arithmetic operations.
+            OpCode::AddImmediate => Ok(Instruction::AddImmediate(AddImmediateInstruction {
+                destination_register: register,
+                value: u32::from_be_bytes(instruction_bytes[2]),
             })),
             OpCode::SubtractImmediate => Ok(Instruction::SubtractImmediate(
                 SubtractImmediateInstruction {
@@ -311,11 +322,7 @@ impl Decoder {
 
         match op_code {
             // Data movement.
-            OpCode::LoadString
-            | OpCode::LoadImmediate
-            | OpCode::LoadContent
-            | OpCode::Move
-            | OpCode::SubtractImmediate => {
+            OpCode::LoadString | OpCode::LoadImmediate | OpCode::LoadContent | OpCode::Move => {
                 Self::immediate(memory, registers, op_code, instruction_bytes)
             }
             // Control flow.
@@ -339,6 +346,10 @@ impl Decoder {
             // Generative, cognitive, and guardrails operations.
             OpCode::Inference | OpCode::Evaluate | OpCode::Similarity => {
                 Self::triple_register(op_code, instruction_bytes)
+            }
+            // Arithmetic operations.
+            OpCode::AddImmediate | OpCode::SubtractImmediate => {
+                Self::immediate(memory, registers, op_code, instruction_bytes)
             }
             // CSV operations.
             OpCode::ReadCSV | OpCode::StatusCSV => {

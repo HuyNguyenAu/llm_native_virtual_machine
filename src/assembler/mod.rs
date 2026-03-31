@@ -42,6 +42,7 @@ impl From<TokenType> for OpCode {
             TokenType::ContextDrop => OpCode::ContextDrop,
             TokenType::MoveContext => OpCode::MoveContext,
             // Arithmetic operations.
+            TokenType::AddImmediate => OpCode::AddImmediate,
             TokenType::SubtractImmediate => OpCode::SubtractImmediate,
             // CSV operations.
             TokenType::ReadCSV => OpCode::ReadCSV,
@@ -630,7 +631,7 @@ impl Assembler {
             TokenType::LoadString | TokenType::LoadContent => {
                 self.single_register_string(token_type, op_code, false)
             }
-            TokenType::LoadImmediate | TokenType::SubtractImmediate => {
+            TokenType::LoadImmediate => {
                 self.single_register_number(token_type, op_code)
             }
             TokenType::Move => self.double_register(token_type, op_code, false, false),
@@ -657,8 +658,12 @@ impl Assembler {
             TokenType::ContextPop => self.double_register(token_type, op_code, false, true),
             TokenType::ContextDrop => self.single_register(token_type, op_code, true),
             TokenType::MoveContext => self.double_register(token_type, op_code, true, true),
+            // Arithmetic operations.
+            TokenType::AddImmediate | TokenType::SubtractImmediate => {
+                self.single_register_number(token_type, op_code)
+            }
             // CSV operations.
-            TokenType::ReadCSV => self.double_register(token_type, op_code, false, false),
+            TokenType::ReadCSV => self.triple_register(token_type, op_code, false),
             TokenType::StatusCSV => self.double_register(token_type, op_code, false, false),
             _ => self.error_at_current("Unexpected keyword."),
         }

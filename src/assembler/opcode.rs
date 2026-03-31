@@ -27,10 +27,11 @@ pub enum OpCode {
     ContextDrop = 0x12,
     MoveContext = 0x13,
     // Arithmetic operations.
-    SubtractImmediate = 0x14,
+    AddImmediate = 0x14,
+    SubtractImmediate = 0x15,
     // CSV operations.
-    ReadCSV = 0x15,
-    StatusCSV = 0x16,
+    ReadCSV = 0x16,
+    StatusCSV = 0x17,
     // Misc.
     NoOp = 0xFF,
 }
@@ -64,6 +65,7 @@ impl OpCode {
         OpCode::ContextDrop,
         OpCode::MoveContext,
         // Arithmetic operations.
+        OpCode::AddImmediate,
         OpCode::SubtractImmediate,
         // CSV operations.
         OpCode::ReadCSV,

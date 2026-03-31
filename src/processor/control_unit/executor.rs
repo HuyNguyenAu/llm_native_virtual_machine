@@ -144,10 +144,17 @@ impl Executor {
             ))
         })?;
 
+        crate::debug_print!(
+            debug,
+            "Executed LC  : r{} = {:?}",
+            instruction.destination_register,
+            file_contents
+        );
+
         registers
             .set_register(
                 instruction.destination_register,
-                &Value::Text(file_contents.clone()),
+                &Value::Text(file_contents),
             )
             .map_err(|e| {
                 Exception::Executor(BaseException::caused_by(
@@ -158,13 +165,6 @@ impl Executor {
                     e,
                 ))
             })?;
-
-        crate::debug_print!(
-            debug,
-            "Executed LC  : r{} = {:?}",
-            instruction.destination_register,
-            file_contents
-        );
 
         Ok(())
     }
@@ -275,8 +275,7 @@ impl Executor {
                     format!("Failed to read register r{}.", instruction.source_register),
                     e,
                 ))
-            })?
-            .clone();
+            })?;
 
         crate::debug_print!(
             debug,
@@ -304,8 +303,7 @@ impl Executor {
                     format!("Failed to read register r{}.", instruction.source_register),
                     e,
                 ))
-            })?
-            .clone();
+            })?;
 
         crate::debug_print!(
             debug,
@@ -367,8 +365,7 @@ impl Executor {
                     ),
                     e,
                 ))
-            })?
-            .clone();
+            })?;
         let conversation_history = registers
             .get_context(instruction.context_register)
             .map_err(|e| {
@@ -389,7 +386,7 @@ impl Executor {
             debug_chat: config.debug_chat,
         };
         let result =
-            LanguageLogicUnit::generate_text(&value, conversation_history, &text_generation_config)
+            LanguageLogicUnit::generate_text(value, conversation_history, &text_generation_config)
                 .map_err(|e| {
                     Exception::Executor(BaseException::caused_by("Text generation failed.", e))
                 })?;
@@ -428,8 +425,7 @@ impl Executor {
                     ),
                     e,
                 ))
-            })?
-            .clone();
+            })?;
         let micro_prompt = format!(
             "{}\nAnswer with exactly one word: YES or NO, TRUE or FALSE.\n\nAnswer only:",
             value
@@ -507,8 +503,7 @@ impl Executor {
                     ),
                     e,
                 ))
-            })?
-            .clone();
+            })?;
         let value_b = Self::read_text(registers, instruction.source_register_2)
             .map_err(|e| {
                 Exception::Executor(BaseException::caused_by(
@@ -518,12 +513,11 @@ impl Executor {
                     ),
                     e,
                 ))
-            })?
-            .clone();
+            })?;
 
         let result = LanguageLogicUnit::cosine_similarity(
-            &value_a,
-            &value_b,
+            value_a,
+            value_b,
             &config.embedding_model,
             &config.base_url,
             &config.embeddings_endpoint,
@@ -634,7 +628,7 @@ impl Executor {
         registers
             .set_register(
                 instruction.destination_register,
-                &Value::Text(context.content.clone()),
+                &Value::Text(context.content),
             )
             .map_err(|e| {
                 Exception::Executor(BaseException::caused_by(

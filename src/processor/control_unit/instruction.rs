@@ -114,6 +114,7 @@ pub struct PrintContextInstruction {
 pub struct ReadCSVInstruction {
     pub destination_register: u32,
     pub source_register: u32,
+    pub row_number_register: u32,
 }
 
 #[derive(Debug)]

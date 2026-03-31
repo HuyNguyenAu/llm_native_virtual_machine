@@ -221,10 +221,6 @@ impl Decoder {
                 source_context_register: source_register,
             })),
             // CSV operations.
-            OpCode::ReadCSV => Ok(Instruction::ReadCSV(ReadCSVInstruction {
-                destination_register,
-                source_register,
-            })),
             OpCode::StatusCSV => Ok(Instruction::StatusCSV(StatusCSVInstruction {
                 destination_register,
                 source_register,
@@ -245,7 +241,7 @@ impl Decoder {
         op_code: OpCode,
         instruction_bytes: [[u8; 4]; 4],
     ) -> Result<Instruction, Exception> {
-        let destination_context_register = u32::from_be_bytes(instruction_bytes[1]);
+        let destination_register = u32::from_be_bytes(instruction_bytes[1]);
         let source_register = u32::from_be_bytes(instruction_bytes[2]);
         let string_pointer = u32::from_be_bytes(instruction_bytes[3]) as usize;
 
@@ -257,8 +253,9 @@ impl Decoder {
         )?;
 
         match op_code {
+            // Context operations.
             OpCode::ContextPush => Ok(Instruction::ContextPush(ContextPushInstruction {
-                destination_context_register,
+                destination_context_register: destination_register,
                 source_register,
                 role: string,
             })),
@@ -281,6 +278,7 @@ impl Decoder {
         let source_register_2 = u32::from_be_bytes(instruction_bytes[3]);
 
         match op_code {
+            // Generative, cognitive, and guardrails operations.
             OpCode::Inference => Ok(Instruction::Inference(InferenceInstruction {
                 destination_register,
                 source_register: source_register_1,
@@ -295,6 +293,12 @@ impl Decoder {
                 destination_register,
                 source_register_1,
                 source_register_2,
+            })),
+            // CSV operations.
+            OpCode::ReadCSV => Ok(Instruction::ReadCSV(ReadCSVInstruction {
+                destination_register,
+                source_register: source_register_1,
+                row_number_register: source_register_2,
             })),
             _ => Err(Exception::Decoder(BaseException::new(
                 format!(
@@ -352,9 +356,8 @@ impl Decoder {
                 Self::immediate(memory, registers, op_code, instruction_bytes)
             }
             // CSV operations.
-            OpCode::ReadCSV | OpCode::StatusCSV => {
-                Self::double_register(op_code, instruction_bytes)
-            }
+            OpCode::ReadCSV => Self::triple_register(op_code, instruction_bytes),
+            OpCode::StatusCSV => Self::double_register(op_code, instruction_bytes),
             OpCode::NoOp => unreachable!(),
         }
     }

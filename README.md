@@ -228,7 +228,7 @@ The instruction set is loosely inspired by RISC-V assembly language:
 | LABEL       | Define a label. Required for branching instructions                                                                              | `label_name:`                      |
 | PUT         | Print the value of `rs`                                                                                                          | `put rs`                           |
 | PLN         | Print the value of `rs` followed by a newline                                                                                    | `pln rs`                           |
-| PCT         | Print the content of the context register `rsc`                                                                                  | `pct rsc`                          |
+| PCX         | Print the content of the context register `rsc`                                                                                  | `pcx rsc`                          |
 | SUBI        | Decrement the value in `rs` by `num`                                                                                             | `sub rd, num`                      |
 | EXIT        | Exit the program                                                                                                                 | `exit`                             |
 

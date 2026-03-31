@@ -1,0 +1,629 @@
+{
+    "meta": {
+        "issue_time_utc": "2026-03-28T05:30:00Z",
+        "issue_time_next_utc": "2026-03-28T17:00:00Z",
+        "local_timezone": "Australia/Melbourne"
+    },
+    "fcst": {
+        "summary": {
+            "region_text": null,
+            "region_coastal_text": null,
+            "sub_region_coastal_text": null,
+            "sub_region_text": null,
+            "public_district_text": null,
+            "seas_text": null,
+            "coast_text": null,
+            "locality_text": null
+        },
+        "daily": [
+            {
+                "date_utc": "2026-03-27T13:00:00Z",
+                "atm": {
+                    "surf_air": {
+                        "radiation": {
+                            "advice_summary": {
+                                "metropolitan_text": null,
+                                "public_district_text": null,
+                                "locality_text": null
+                            }
+                        },
+                        "wind": {
+                            "coastal": {
+                                "coast_text": null
+                            },
+                            "warning_summary": {
+                                "coast_text": null
+                            }
+                        },
+                        "weather": {
+                            "precis_text": "Shower or two.",
+                            "locality_text": "Cloudy. Medium chance of showers, most likely later this evening. Winds southerly 20 to 30 km/h decreasing to 15 to 20 km/h in the late evening.",
+                            "region_text": null,
+                            "public_district_text": null,
+                            "metropolitan_text": null,
+                            "seas_text": null,
+                            "coast_text": null
+                        },
+                        "heatwave": {
+                            "country_text": null,
+                            "link_map_image": null
+                        },
+                        "tropical_system_situation": {
+                            "coast_text": null
+                        }
+                    }
+                },
+                "ocn": {
+                    "surf_water": {
+                        "caution": {
+                            "coast_text": null
+                        },
+                        "sea_height_summary": {
+                            "coast_text": null
+                        },
+                        "swell_1st_summary": {
+                            "coast_text": null
+                        },
+                        "swell_2nd_summary": {
+                            "coast_text": null
+                        },
+                        "wave_summary": {
+                            "coast_text": null
+                        },
+                        "surf_danger": {
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null
+                        }
+                    }
+                },
+                "terr": {
+                    "surf_land": {
+                        "fire_danger": {
+                            "rating": {
+                                "fire_district_code": null,
+                                "public_district_code": null
+                            },
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null,
+                            "region_text": null
+                        }
+                    }
+                }
+            },
+            {
+                "date_utc": "2026-03-28T13:00:00Z",
+                "atm": {
+                    "surf_air": {
+                        "radiation": {
+                            "advice_summary": {
+                                "metropolitan_text": null,
+                                "public_district_text": null,
+                                "locality_text": "Sun protection 10:30am to 4:20pm, UV Index predicted to reach 7 [High]"
+                            }
+                        },
+                        "wind": {
+                            "coastal": {
+                                "coast_text": null
+                            },
+                            "warning_summary": {
+                                "coast_text": null
+                            }
+                        },
+                        "weather": {
+                            "precis_text": "Cloudy.",
+                            "locality_text": "Cloudy. Slight chance of a shower in the morning. Winds southerly 15 to 20 km/h becoming light before dawn then becoming south to southeasterly 15 to 20 km/h in the late afternoon.",
+                            "region_text": null,
+                            "public_district_text": null,
+                            "metropolitan_text": null,
+                            "seas_text": null,
+                            "coast_text": null
+                        },
+                        "heatwave": {
+                            "country_text": null,
+                            "link_map_image": null
+                        },
+                        "tropical_system_situation": {
+                            "coast_text": null
+                        }
+                    }
+                },
+                "ocn": {
+                    "surf_water": {
+                        "caution": {
+                            "coast_text": null
+                        },
+                        "sea_height_summary": {
+                            "coast_text": null
+                        },
+                        "swell_1st_summary": {
+                            "coast_text": null
+                        },
+                        "swell_2nd_summary": {
+                            "coast_text": null
+                        },
+                        "wave_summary": {
+                            "coast_text": null
+                        },
+                        "surf_danger": {
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null
+                        }
+                    }
+                },
+                "terr": {
+                    "surf_land": {
+                        "fire_danger": {
+                            "rating": {
+                                "fire_district_code": null,
+                                "public_district_code": null
+                            },
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": "Moderate",
+                            "region_text": null
+                        }
+                    }
+                }
+            },
+            {
+                "date_utc": "2026-03-29T13:00:00Z",
+                "atm": {
+                    "surf_air": {
+                        "radiation": {
+                            "advice_summary": {
+                                "metropolitan_text": null,
+                                "public_district_text": null,
+                                "locality_text": null
+                            }
+                        },
+                        "wind": {
+                            "coastal": {
+                                "coast_text": null
+                            },
+                            "warning_summary": {
+                                "coast_text": null
+                            }
+                        },
+                        "weather": {
+                            "precis_text": "Mostly sunny.",
+                            "locality_text": "Mostly sunny. Light winds.",
+                            "region_text": null,
+                            "public_district_text": null,
+                            "metropolitan_text": null,
+                            "seas_text": null,
+                            "coast_text": null
+                        },
+                        "heatwave": {
+                            "country_text": null,
+                            "link_map_image": null
+                        },
+                        "tropical_system_situation": {
+                            "coast_text": null
+                        }
+                    }
+                },
+                "ocn": {
+                    "surf_water": {
+                        "caution": {
+                            "coast_text": null
+                        },
+                        "sea_height_summary": {
+                            "coast_text": null
+                        },
+                        "swell_1st_summary": {
+                            "coast_text": null
+                        },
+                        "swell_2nd_summary": {
+                            "coast_text": null
+                        },
+                        "wave_summary": {
+                            "coast_text": null
+                        },
+                        "surf_danger": {
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null
+                        }
+                    }
+                },
+                "terr": {
+                    "surf_land": {
+                        "fire_danger": {
+                            "rating": {
+                                "fire_district_code": null,
+                                "public_district_code": null
+                            },
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null,
+                            "region_text": null
+                        }
+                    }
+                }
+            },
+            {
+                "date_utc": "2026-03-30T13:00:00Z",
+                "atm": {
+                    "surf_air": {
+                        "radiation": {
+                            "advice_summary": {
+                                "metropolitan_text": null,
+                                "public_district_text": null,
+                                "locality_text": null
+                            }
+                        },
+                        "wind": {
+                            "coastal": {
+                                "coast_text": null
+                            },
+                            "warning_summary": {
+                                "coast_text": null
+                            }
+                        },
+                        "weather": {
+                            "precis_text": "Mostly sunny.",
+                            "locality_text": "Mostly sunny. Light winds becoming north to northeasterly 15 to 25 km/h during the day.",
+                            "region_text": null,
+                            "public_district_text": null,
+                            "metropolitan_text": null,
+                            "seas_text": null,
+                            "coast_text": null
+                        },
+                        "heatwave": {
+                            "country_text": null,
+                            "link_map_image": null
+                        },
+                        "tropical_system_situation": {
+                            "coast_text": null
+                        }
+                    }
+                },
+                "ocn": {
+                    "surf_water": {
+                        "caution": {
+                            "coast_text": null
+                        },
+                        "sea_height_summary": {
+                            "coast_text": null
+                        },
+                        "swell_1st_summary": {
+                            "coast_text": null
+                        },
+                        "swell_2nd_summary": {
+                            "coast_text": null
+                        },
+                        "wave_summary": {
+                            "coast_text": null
+                        },
+                        "surf_danger": {
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null
+                        }
+                    }
+                },
+                "terr": {
+                    "surf_land": {
+                        "fire_danger": {
+                            "rating": {
+                                "fire_district_code": null,
+                                "public_district_code": null
+                            },
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null,
+                            "region_text": null
+                        }
+                    }
+                }
+            },
+            {
+                "date_utc": "2026-03-31T13:00:00Z",
+                "atm": {
+                    "surf_air": {
+                        "radiation": {
+                            "advice_summary": {
+                                "metropolitan_text": null,
+                                "public_district_text": null,
+                                "locality_text": null
+                            }
+                        },
+                        "wind": {
+                            "coastal": {
+                                "coast_text": null
+                            },
+                            "warning_summary": {
+                                "coast_text": null
+                            }
+                        },
+                        "weather": {
+                            "precis_text": "Possible shower.",
+                            "locality_text": "Mostly sunny morning. Medium chance of showers, most likely in the afternoon and evening. Winds northerly 25 to 35 km/h becoming light during the evening.",
+                            "region_text": null,
+                            "public_district_text": null,
+                            "metropolitan_text": null,
+                            "seas_text": null,
+                            "coast_text": null
+                        },
+                        "heatwave": {
+                            "country_text": null,
+                            "link_map_image": null
+                        },
+                        "tropical_system_situation": {
+                            "coast_text": null
+                        }
+                    }
+                },
+                "ocn": {
+                    "surf_water": {
+                        "caution": {
+                            "coast_text": null
+                        },
+                        "sea_height_summary": {
+                            "coast_text": null
+                        },
+                        "swell_1st_summary": {
+                            "coast_text": null
+                        },
+                        "swell_2nd_summary": {
+                            "coast_text": null
+                        },
+                        "wave_summary": {
+                            "coast_text": null
+                        },
+                        "surf_danger": {
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null
+                        }
+                    }
+                },
+                "terr": {
+                    "surf_land": {
+                        "fire_danger": {
+                            "rating": {
+                                "fire_district_code": null,
+                                "public_district_code": null
+                            },
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null,
+                            "region_text": null
+                        }
+                    }
+                }
+            },
+            {
+                "date_utc": "2026-04-01T13:00:00Z",
+                "atm": {
+                    "surf_air": {
+                        "radiation": {
+                            "advice_summary": {
+                                "metropolitan_text": null,
+                                "public_district_text": null,
+                                "locality_text": null
+                            }
+                        },
+                        "wind": {
+                            "coastal": {
+                                "coast_text": null
+                            },
+                            "warning_summary": {
+                                "coast_text": null
+                            }
+                        },
+                        "weather": {
+                            "precis_text": "Partly cloudy.",
+                            "locality_text": "Partly cloudy. Slight chance of a shower, most likely later in the day. Light winds becoming southerly 15 to 20 km/h during the day.",
+                            "region_text": null,
+                            "public_district_text": null,
+                            "metropolitan_text": null,
+                            "seas_text": null,
+                            "coast_text": null
+                        },
+                        "heatwave": {
+                            "country_text": null,
+                            "link_map_image": null
+                        },
+                        "tropical_system_situation": {
+                            "coast_text": null
+                        }
+                    }
+                },
+                "ocn": {
+                    "surf_water": {
+                        "caution": {
+                            "coast_text": null
+                        },
+                        "sea_height_summary": {
+                            "coast_text": null
+                        },
+                        "swell_1st_summary": {
+                            "coast_text": null
+                        },
+                        "swell_2nd_summary": {
+                            "coast_text": null
+                        },
+                        "wave_summary": {
+                            "coast_text": null
+                        },
+                        "surf_danger": {
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null
+                        }
+                    }
+                },
+                "terr": {
+                    "surf_land": {
+                        "fire_danger": {
+                            "rating": {
+                                "fire_district_code": null,
+                                "public_district_code": null
+                            },
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null,
+                            "region_text": null
+                        }
+                    }
+                }
+            },
+            {
+                "date_utc": "2026-04-02T13:00:00Z",
+                "atm": {
+                    "surf_air": {
+                        "radiation": {
+                            "advice_summary": {
+                                "metropolitan_text": null,
+                                "public_district_text": null,
+                                "locality_text": null
+                            }
+                        },
+                        "wind": {
+                            "coastal": {
+                                "coast_text": null
+                            },
+                            "warning_summary": {
+                                "coast_text": null
+                            }
+                        },
+                        "weather": {
+                            "precis_text": "Possible shower.",
+                            "locality_text": "Partly cloudy. Medium chance of showers, most likely during the morning. Light winds becoming southerly 15 to 25 km/h during the morning.",
+                            "region_text": null,
+                            "public_district_text": null,
+                            "metropolitan_text": null,
+                            "seas_text": null,
+                            "coast_text": null
+                        },
+                        "heatwave": {
+                            "country_text": null,
+                            "link_map_image": null
+                        },
+                        "tropical_system_situation": {
+                            "coast_text": null
+                        }
+                    }
+                },
+                "ocn": {
+                    "surf_water": {
+                        "caution": {
+                            "coast_text": null
+                        },
+                        "sea_height_summary": {
+                            "coast_text": null
+                        },
+                        "swell_1st_summary": {
+                            "coast_text": null
+                        },
+                        "swell_2nd_summary": {
+                            "coast_text": null
+                        },
+                        "wave_summary": {
+                            "coast_text": null
+                        },
+                        "surf_danger": {
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null
+                        }
+                    }
+                },
+                "terr": {
+                    "surf_land": {
+                        "fire_danger": {
+                            "rating": {
+                                "fire_district_code": null,
+                                "public_district_code": null
+                            },
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null,
+                            "region_text": null
+                        }
+                    }
+                }
+            },
+            {
+                "date_utc": "2026-04-03T13:00:00Z",
+                "atm": {
+                    "surf_air": {
+                        "radiation": {
+                            "advice_summary": {
+                                "metropolitan_text": null,
+                                "public_district_text": null,
+                                "locality_text": null
+                            }
+                        },
+                        "wind": {
+                            "coastal": {
+                                "coast_text": null
+                            },
+                            "warning_summary": {
+                                "coast_text": null
+                            }
+                        },
+                        "weather": {
+                            "precis_text": "Partly cloudy.",
+                            "locality_text": "Partly cloudy. Winds south to southeasterly 15 to 20 km/h.",
+                            "region_text": null,
+                            "public_district_text": null,
+                            "metropolitan_text": null,
+                            "seas_text": null,
+                            "coast_text": null
+                        },
+                        "heatwave": {
+                            "country_text": null,
+                            "link_map_image": null
+                        },
+                        "tropical_system_situation": {
+                            "coast_text": null
+                        }
+                    }
+                },
+                "ocn": {
+                    "surf_water": {
+                        "caution": {
+                            "coast_text": null
+                        },
+                        "sea_height_summary": {
+                            "coast_text": null
+                        },
+                        "swell_1st_summary": {
+                            "coast_text": null
+                        },
+                        "swell_2nd_summary": {
+                            "coast_text": null
+                        },
+                        "wave_summary": {
+                            "coast_text": null
+                        },
+                        "surf_danger": {
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null
+                        }
+                    }
+                },
+                "terr": {
+                    "surf_land": {
+                        "fire_danger": {
+                            "rating": {
+                                "fire_district_code": null,
+                                "public_district_code": null
+                            },
+                            "metropolitan_text": null,
+                            "public_district_text": null,
+                            "locality_text": null,
+                            "region_text": null
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

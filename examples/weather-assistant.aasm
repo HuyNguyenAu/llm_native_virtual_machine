@@ -1,0 +1,14 @@
+; Program: Weather Assistant
+; Objective: Provide a weather forecast for tomorrow based on the data from a JSON file.
+; Output: A sentence describing the weather forecast for tomorrow.
+
+LC  X1, "examples/data/weather-data.json"
+LS  X2, "Today is 2026-04-01."
+
+PSH C1, X1, "user"
+PSH C1, X2, "user"
+
+LS  X2, "What is the weather like for tomorrow? Is it playable weather for golf? Don't specify the date in the response."
+INF X3, X2, C1
+
+PLN X3

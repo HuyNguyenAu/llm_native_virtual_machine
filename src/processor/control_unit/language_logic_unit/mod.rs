@@ -4,34 +4,25 @@ use crate::{
     constants::SYSTEM_PROMPT,
     exception::{BaseException, Exception},
     processor::{
-        control_unit::language_logic_unit::openai::{
-            OpenAIClient,
-            chat_completion_models::{
-                OpenAIChatCompletionRequest, OpenAIChatCompletionRequestText,
+        control_unit::language_logic_unit::{
+            boolean_eval_params::BooleanEvalParams,
+            openai::{
+                OpenAIClient,
+                chat_completion_models::{
+                    OpenAIChatCompletionRequest, OpenAIChatCompletionRequestText,
+                },
+                embeddings_models::OpenAIEmbeddingsRequest,
+                model_config::{ModelEmbeddingsConfig, ModelTextConfig},
             },
-            embeddings_models::OpenAIEmbeddingsRequest,
-            model_config::{ModelEmbeddingsConfig, ModelTextConfig},
+            text_generation_config::TextGenerationConfig,
         },
         registers::ContextMessage,
     },
 };
 
+pub mod boolean_eval_params;
 mod openai;
-
-pub struct BooleanEvalParams {
-    pub true_values: Vec<String>,
-    pub false_values: Vec<String>,
-    pub embedding_model: String,
-}
-
-pub struct TextGenerationConfig {
-    pub text_model: String,
-    pub text_model_overrides: TextModelOverrides,
-    pub base_url: String,
-    pub chat_completion_endpoint: String,
-    pub timeout_secs: u64,
-    pub debug_chat: bool,
-}
+pub mod text_generation_config;
 
 pub struct LanguageLogicUnit;
 

@@ -13,7 +13,10 @@ use crate::{
                 MoveInstruction, PrintContextInstruction, PrintInstruction, PrintLineInstruction,
                 ReadCSVInstruction, SimilarityInstruction, SubtractImmediateInstruction,
             },
-            language_logic_unit::{BooleanEvalParams, LanguageLogicUnit, TextGenerationConfig},
+            language_logic_unit::{
+                LanguageLogicUnit, boolean_eval_params::BooleanEvalParams,
+                text_generation_config::TextGenerationConfig,
+            },
         },
         memory::Memory,
         registers::{ContextMessage, Registers, Value},

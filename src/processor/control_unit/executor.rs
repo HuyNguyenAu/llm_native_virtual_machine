@@ -7,7 +7,7 @@ use crate::{
         control_unit::{
             instruction::{
                 AddImmediateInstruction, BranchInstruction, BranchType, ContextDropInstruction,
-                ContextPopInstruction, ContextPushInstruction, EvalulateInstruction,
+                ContextPopInstruction, ContextPushInstruction, EvaluateInstruction,
                 InferenceInstruction, Instruction, LineCountInstruction, LoadContentInstruction,
                 LoadImmediateInstruction, LoadStringInstruction, MoveContextInstruction,
                 MoveInstruction, PrintContextInstruction, PrintInstruction, PrintLineInstruction,
@@ -263,7 +263,7 @@ impl Executor {
     ) -> Result<(), Exception> {
         let value = Self::read_text(registers, instruction.source_register)?.clone();
         let context = registers.get_context(instruction.context_register)?;
-        let result = LanguageLogicUnit::string(
+        let result = LanguageLogicUnit::generate_text(
             &value,
             context,
             text_model,
@@ -283,7 +283,7 @@ impl Executor {
 
     fn evaluate(
         registers: &mut Registers,
-        instruction: &EvalulateInstruction,
+        instruction: &EvaluateInstruction,
         text_model: &str,
         embedding_model: &str,
         text_model_overrides: &TextModelOverrides,
@@ -305,7 +305,7 @@ impl Executor {
             embedding_model,
         };
 
-        let result = LanguageLogicUnit::boolean(
+        let result = LanguageLogicUnit::evaluate_boolean(
             &micro_prompt,
             &eval_params,
             context,
@@ -458,26 +458,26 @@ impl Executor {
         instruction: &SubtractImmediateInstruction,
         debug: bool,
     ) -> Result<(), Exception> {
-        let value = Self::read_number(registers, instruction.source_register)?;
+        let value = Self::read_number(registers, instruction.destination_register)?;
 
         if value < instruction.value {
             return Err(Exception::Executor(BaseException::new(
                 format!(
                     "Cannot subtract {} from register r{} because it would result in a negative value.",
-                    instruction.value, instruction.source_register
+                    instruction.value, instruction.destination_register
                 ),
                 None,
             )));
         }
 
         let new_value = Value::Number(value - instruction.value);
-        registers.set_register(instruction.source_register, &new_value)?;
+        registers.set_register(instruction.destination_register, &new_value)?;
 
         crate::debug_print!(
             debug,
             "Executed SUBI: Subtracted {} from r{} resulting in {}.",
             instruction.value,
-            instruction.source_register,
+            instruction.destination_register,
             new_value
         );
 

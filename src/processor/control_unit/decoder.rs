@@ -4,7 +4,7 @@ use crate::{
     processor::{
         control_unit::instruction::{
             AddImmediateInstruction, BranchInstruction, BranchType, ContextDropInstruction,
-            ContextPopInstruction, ContextPushInstruction, EvalulateInstruction, ExitInstruction,
+            ContextPopInstruction, ContextPushInstruction, EvaluateInstruction, ExitInstruction,
             InferenceInstruction, Instruction, LineCountInstruction, LoadContentInstruction,
             LoadImmediateInstruction, LoadStringInstruction, MoveContextInstruction,
             MoveInstruction, PrintContextInstruction, PrintInstruction, PrintLineInstruction,
@@ -28,7 +28,7 @@ impl Decoder {
         })
     }
 
-    fn string(
+    fn read_data_string(
         memory: &Memory,
         registers: &Registers,
         pointer: usize,
@@ -80,7 +80,7 @@ impl Decoder {
             // Data movement.
             OpCode::LoadString | OpCode::LoadContent => {
                 let string_pointer = u32::from_be_bytes(instruction_bytes[2]) as usize;
-                let string = Self::string(
+                let string = Self::read_data_string(
                     memory,
                     registers,
                     string_pointer,
@@ -114,7 +114,7 @@ impl Decoder {
             })),
             OpCode::SubtractImmediate => Ok(Instruction::SubtractImmediate(
                 SubtractImmediateInstruction {
-                    source_register: register,
+                    destination_register: register,
                     value: u32::from_be_bytes(instruction_bytes[2]),
                 },
             )),
@@ -245,7 +245,7 @@ impl Decoder {
         let source_register = u32::from_be_bytes(instruction_bytes[2]);
         let string_pointer = u32::from_be_bytes(instruction_bytes[3]) as usize;
 
-        let string = Self::string(
+        let string = Self::read_data_string(
             memory,
             registers,
             string_pointer,
@@ -284,7 +284,7 @@ impl Decoder {
                 source_register: source_register_1,
                 context_register: source_register_2,
             })),
-            OpCode::Evaluate => Ok(Instruction::Evaluate(EvalulateInstruction {
+            OpCode::Evaluate => Ok(Instruction::Evaluate(EvaluateInstruction {
                 destination_register,
                 source_register: source_register_1,
                 context_register: source_register_2,

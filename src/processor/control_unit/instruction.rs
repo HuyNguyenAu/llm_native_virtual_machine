@@ -29,7 +29,7 @@ pub struct InferenceInstruction {
 }
 
 #[derive(Debug)]
-pub struct EvalulateInstruction {
+pub struct EvaluateInstruction {
     pub destination_register: u32,
     pub source_register: u32,
     pub context_register: u32,
@@ -91,7 +91,7 @@ pub struct AddImmediateInstruction {
 
 #[derive(Debug)]
 pub struct SubtractImmediateInstruction {
-    pub source_register: u32,
+    pub destination_register: u32,
     pub value: u32,
 }
 
@@ -143,7 +143,7 @@ pub enum Instruction {
     // Generative operations.
     Inference(InferenceInstruction),
     // Guardrails operations.
-    Evaluate(EvalulateInstruction),
+    Evaluate(EvaluateInstruction),
     Similarity(SimilarityInstruction),
     // Context operations.
     ContextPush(ContextPushInstruction),

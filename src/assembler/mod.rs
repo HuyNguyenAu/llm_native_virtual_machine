@@ -10,6 +10,8 @@ pub mod roles;
 mod scanner;
 
 const HEADER_SIZE: u32 = 2;
+const WORD_SIZE: usize = 4;
+const MAX_REGISTER: u32 = 32;
 
 impl From<TokenType> for OpCode {
     fn from(token_type: TokenType) -> Self {
@@ -103,6 +105,24 @@ impl Assembler {
         &self.source[token.start()..token.end()]
     }
 
+    fn current_token(&self) -> Result<&Token, Exception> {
+        self.current.as_ref().ok_or_else(|| {
+            Exception::Assembler(BaseException::new(
+                "No current token available".to_string(),
+                None,
+            ))
+        })
+    }
+
+    fn previous_token(&self) -> Result<&Token, Exception> {
+        self.previous.as_ref().ok_or_else(|| {
+            Exception::Assembler(BaseException::new(
+                "No previous token available".to_string(),
+                None,
+            ))
+        })
+    }
+
     fn error_at(&mut self, token: &Token, message: &str) {
         if self.panic_mode {
             return;
@@ -123,35 +143,13 @@ impl Assembler {
     }
 
     fn error_at_current(&mut self, message: &str) -> Result<(), Exception> {
-        let token = self
-            .current
-            .as_ref()
-            .ok_or_else(|| {
-                Exception::Assembler(BaseException::new(
-                    "Unexpected end of input. No current token available for error reporting."
-                        .to_string(),
-                    None,
-                ))
-            })?
-            .clone();
-
+        let token = self.current_token()?.clone();
         self.error_at(&token, message);
         Ok(())
     }
 
     fn error_at_previous(&mut self, message: &str) -> Result<(), Exception> {
-        let token = self
-            .previous
-            .as_ref()
-            .ok_or_else(|| {
-                Exception::Assembler(BaseException::new(
-                    "Unexpected end of input. No previous token available for error reporting."
-                        .to_string(),
-                    None,
-                ))
-            })?
-            .clone();
-
+        let token = self.previous_token()?.clone();
         self.error_at(&token, message);
         Ok(())
     }
@@ -239,8 +237,8 @@ impl Assembler {
             }
         };
 
-        if !(0..=32).contains(&register_number) {
-            let err = format!("Register number {} out of range (0-32).", register_number);
+        if register_number > MAX_REGISTER {
+            let err = format!("Register number {} out of range (0-{}).", register_number, MAX_REGISTER);
             self.error_at_previous(&err)?;
             return Err(Exception::Assembler(BaseException::new(err, None)));
         }
@@ -269,7 +267,7 @@ impl Assembler {
         Ok(())
     }
 
-    fn upsert_unresolved_label(&mut self, key: String) -> Result<(), Exception> {
+    fn track_unresolved_label(&mut self, key: String) -> Result<(), Exception> {
         let index = self.text_segment.len().saturating_sub(1);
 
         if let Some(label) = self.unresolved_labels.get_mut(&key) {
@@ -342,7 +340,7 @@ impl Assembler {
 
     fn emit_string(&mut self, value: &str) -> Result<u32, Exception> {
         let nulled_value = format!("{}\0", value);
-        let words: Vec<[u8; 4]> = nulled_value
+        let words: Vec<[u8; WORD_SIZE]> = nulled_value
             .bytes()
             .map(|byte| u32::from(byte).to_be_bytes())
             .collect();
@@ -367,7 +365,7 @@ impl Assembler {
 
     fn emit_label(&mut self, key: String) -> Result<(), Exception> {
         self.emit_number(0);
-        self.upsert_unresolved_label(key)
+        self.track_unresolved_label(key)
     }
 
     fn emit_padding(&mut self, words: usize) {

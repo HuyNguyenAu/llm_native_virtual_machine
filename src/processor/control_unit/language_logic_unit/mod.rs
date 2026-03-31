@@ -248,7 +248,7 @@ impl LanguageLogicUnit {
         Ok(percentage_similarity.round() as u32)
     }
 
-    pub fn string(
+    pub fn generate_text(
         micro_prompt: &str,
         context: &[ContextMessage],
         text_model: &str,
@@ -282,7 +282,7 @@ impl LanguageLogicUnit {
             .map(|scores| scores.into_iter().max().unwrap_or(0))
     }
 
-    pub fn boolean(
+    pub fn evaluate_boolean(
         micro_prompt: &str,
         eval_params: &BooleanEvalParams,
         context: &[ContextMessage],
@@ -290,7 +290,7 @@ impl LanguageLogicUnit {
         text_model_overrides: &TextModelOverrides,
         debug_chat: bool,
     ) -> Result<u32, Exception> {
-        let value = Self::string(
+        let value = Self::generate_text(
             micro_prompt,
             context,
             text_model,

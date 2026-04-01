@@ -11,27 +11,28 @@ pub enum OpCode {
     BranchLess = 0x06,
     BranchGreaterEqual = 0x07,
     BranchGreater = 0x08,
-    Exit = 0x09,
+    BranchNotEqual = 0x09,
+    Exit = 0x0A,
     // I/O.
-    Print = 0x0A,
-    PrintLine = 0x0B,
-    PrintContext = 0x0C,
+    Print = 0x0B,
+    PrintLine = 0x0C,
+    PrintContext = 0x0D,
     // Generative operations.
-    Inference = 0x0D,
+    Inference = 0x0E,
     // Guardrails operations.
-    Evaluate = 0x0E,
-    Similarity = 0x0F,
+    Evaluate = 0x0F,
+    Similarity = 0x10,
     // Context operations.
-    ContextPush = 0x10,
-    ContextPop = 0x11,
-    ContextDrop = 0x12,
-    MoveContext = 0x13,
+    ContextPush = 0x11,
+    ContextPop = 0x12,
+    ContextDrop = 0x13,
+    MoveContext = 0x14,
     // Arithmetic operations.
-    AddImmediate = 0x14,
-    SubtractImmediate = 0x15,
+    AddImmediate = 0x15,
+    SubtractImmediate = 0x16,
     // Text operations.
-    ReadLine = 0x16,
-    CountLines = 0x17,
+    ReadLine = 0x17,
+    CountLines = 0x18,
     // Misc.
     NoOp = 0xFF,
 }
@@ -49,6 +50,7 @@ impl OpCode {
         OpCode::BranchLess,
         OpCode::BranchGreaterEqual,
         OpCode::BranchGreater,
+        OpCode::BranchNotEqual,
         // I/O.
         OpCode::Exit,
         OpCode::Print,

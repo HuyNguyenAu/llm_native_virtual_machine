@@ -232,6 +232,7 @@ impl Executor {
             BranchType::LessEqual => (value_a <= value_b, "BLE"),
             BranchType::Greater => (value_a > value_b, "BGT"),
             BranchType::GreaterEqual => (value_a >= value_b, "BGE"),
+            BranchType::NotEqual => (value_a != value_b, "BNE"),
         };
 
         if is_true {

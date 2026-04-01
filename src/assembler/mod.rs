@@ -26,6 +26,7 @@ impl From<TokenType> for OpCode {
             TokenType::BranchLess => OpCode::BranchLess,
             TokenType::BranchGreaterEqual => OpCode::BranchGreaterEqual,
             TokenType::BranchGreater => OpCode::BranchGreater,
+            TokenType::BranchNotEqual => OpCode::BranchNotEqual,
             TokenType::Exit => OpCode::Exit,
             // I/O.
             TokenType::Print => OpCode::Print,
@@ -677,7 +678,8 @@ impl Assembler {
             | TokenType::BranchLess
             | TokenType::BranchLessEqual
             | TokenType::BranchGreater
-            | TokenType::BranchGreaterEqual => self.branch(token_type, op_code),
+            | TokenType::BranchGreaterEqual
+            | TokenType::BranchNotEqual => self.branch(token_type, op_code),
             TokenType::Exit => self.no_register(token_type, op_code),
             TokenType::Label => self.label(),
             // I/O.

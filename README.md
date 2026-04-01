@@ -215,6 +215,7 @@ The instruction set is loosely inspired by RISC-V assembly language:
 | MV          | Copy `rs` into `rd`                                                                                                              | `mv rd, rs`                        |
 | MVC         | Copy `rsc` into `rdc`                                                                                                            | `mvc rdc, rsc`                     |
 | BEQ         | Go to label if `rs1` = `rs2`                                                                                                     | `beq rs1, rs2, label_name`         |
+| BNE         | Go to label if `rs1` != `rs2`                                                                                                    | `bne rs1, rs2, label_name`         |
 | BLT         | Go to label if `rs1` < `rs2`                                                                                                     | `blt rs1, rs2, label_name`         |
 | BLE         | Go to label if `rs1` <= `rs2`                                                                                                    | `ble rs1, rs2, label_name`         |
 | BGT         | Go to label if `rs1` > `rs2`                                                                                                     | `bgt rs1, rs2, label_name`         |

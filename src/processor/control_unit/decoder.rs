@@ -148,6 +148,7 @@ impl Decoder {
             OpCode::BranchLessEqual => BranchType::LessEqual,
             OpCode::BranchGreater => BranchType::Greater,
             OpCode::BranchGreaterEqual => BranchType::GreaterEqual,
+            OpCode::BranchNotEqual => BranchType::NotEqual,
             _ => {
                 return Err(Exception::Decoder(BaseException::new(
                     format!(
@@ -354,7 +355,8 @@ impl Decoder {
             | OpCode::BranchLess
             | OpCode::BranchLessEqual
             | OpCode::BranchGreater
-            | OpCode::BranchGreaterEqual => Self::decode_branch(op_code, instruction_bytes),
+            | OpCode::BranchGreaterEqual
+            | OpCode::BranchNotEqual => Self::decode_branch(op_code, instruction_bytes),
             OpCode::Exit => Self::decode_no_register(op_code),
             // I/O.
             OpCode::Print | OpCode::PrintLine | OpCode::PrintContext | OpCode::ContextDrop => {

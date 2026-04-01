@@ -17,6 +17,7 @@ pub enum TokenType {
     BranchLess,
     BranchGreaterEqual,
     BranchGreater,
+    BranchNotEqual,
     Exit,
     // I/O keywords.
     Print,
@@ -60,6 +61,7 @@ impl TryFrom<&str> for TokenType {
             "blt" => Ok(TokenType::BranchLess),
             "bge" => Ok(TokenType::BranchGreaterEqual),
             "bgt" => Ok(TokenType::BranchGreater),
+            "bne" => Ok(TokenType::BranchNotEqual),
             "exit" => Ok(TokenType::Exit),
             // I/O.
             "put" => Ok(TokenType::Print),

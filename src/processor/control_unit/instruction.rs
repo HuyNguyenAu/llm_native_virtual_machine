@@ -49,6 +49,7 @@ pub enum BranchType {
     Less,
     GreaterEqual,
     Greater,
+    NotEqual,
 }
 
 #[derive(Debug)]
